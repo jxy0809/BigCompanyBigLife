@@ -9,24 +9,48 @@ export interface Attributes {
 }
 
 export enum Location {
-  WORKSTATION = 'WORKSTATION', // 工位
-  MEETING_ROOM = 'MEETING_ROOM', // 会议室
-  BOSS_OFFICE = 'BOSS_OFFICE', // 老板办公室
-  HOME = 'HOME' // 家
+  WORKSTATION = 'WORKSTATION',
+  MEETING_ROOM = 'MEETING_ROOM',
+  BOSS_OFFICE = 'BOSS_OFFICE',
+  HOME = 'HOME'
+}
+
+export enum EventCategory {
+  ROUTINE = 'ROUTINE',   // 常规 (60%)
+  SURPRISE = 'SURPRISE', // 惊喜 (15%)
+  CRISIS = 'CRISIS',     // 危机 (15%)
+  ENCOUNTER = 'ENCOUNTER',// 奇遇 (10%)
+  SMALL_WEEK = 'SMALL_WEEK' // 小周专属 (Specific to Small Weeks)
 }
 
 export interface GameStats {
+  // Core Resources
   stamina: number; 
+  maxStamina: number; // Derived from Health (50 + Health * 8)
   sanity: number;
+  sanityRate: number; // Derived from EQ
+  
+  // Economy
   money: number;
-  salary: number;    // Weekly Salary
+  salary: number;    
+  expenses: number; // Dynamic weekly expenses
+
+  // Progress
   level: number;
   exp: number;
-  week: number;      // Changed from days to week
+  week: number;      
   risk: number;
+  
+  // Attributes & Traits
   attributes: Attributes;
-  bankruptcyCount: number; // Track weeks in debt
+  titles: string[]; // Unlocked titles
+  
+  // Metadata / Counters
+  techEventCount: number; // For mastery tracking
+  debtWeeks: number; // Replaces bankruptcyCount for clearer logic
   location: Location;
+  overtimeHours: number; // Track for final report
+  isSmallWeek: boolean; // Current week status
 }
 
 export interface OptionEffect {
@@ -35,7 +59,7 @@ export interface OptionEffect {
   money?: number;
   exp?: number;
   risk?: number;
-  attributes?: Partial<Attributes>; // Allow attribute changes
+  attributes?: Partial<Attributes>; 
   message: string;
 }
 
@@ -47,7 +71,8 @@ export interface GameOption {
 
 export interface GameEvent {
   id: string;
-  location: Location; // Event bound to a location
+  category: EventCategory;
+  location: Location; 
   title: string;
   description: string;
   options: GameOption[];
@@ -66,10 +91,10 @@ export interface ShopItem {
 export enum GameState {
   START = 'START',
   CREATION = 'CREATION',
-  WEEK_START = 'WEEK_START', // Monday morning
+  WEEK_START = 'WEEK_START', 
   EVENT = 'EVENT',
   RESULT = 'RESULT',
-  WEEKEND = 'WEEKEND',       // Weekend Decision
+  WEEKEND = 'WEEKEND',       
   GAME_OVER = 'GAME_OVER',
   VICTORY = 'VICTORY'
 }
@@ -89,3 +114,11 @@ export const LEVELS = [
   { id: 6, title: 'P8 高级专家', salary: 35000 },
   { id: 7, title: 'P9 资深总监', salary: 60000 },
 ];
+
+export interface TitleConfig {
+    id: string;
+    name: string;
+    condition: (stats: GameStats) => boolean;
+    description: string;
+    buff: string;
+}
