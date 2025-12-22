@@ -191,7 +191,7 @@ const App: React.FC = () => {
             <div className="w-20 h-20 bg-black rounded-2xl flex items-center justify-center shadow-lg mb-8 transform rotate-3">
                 <Building2 size={40} className="text-white" />
             </div>
-            <h1 className="text-3xl font-bold mb-2 tracking-tight text-[#1f2329]">行业生存记</h1>
+            <h1 className="text-3xl font-bold mb-2 tracking-tight text-[#1f2329]">大厂风云</h1>
             <p className="text-[#646a73] mb-8 text-center text-sm">选择你的赛道，开始内卷。</p>
             <div className="bg-yellow-50 text-yellow-800 px-4 py-2 rounded-lg text-xs font-bold mb-8">
                 累计生涯点数: {meta.totalCareerPoints}
