@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { TabView } from '../types';
-import { Briefcase, FileText, ShoppingBag } from 'lucide-react';
+import { Briefcase, FileText, ShoppingBag, History } from 'lucide-react';
 
 interface Props {
   currentTab: TabView;
@@ -23,10 +24,11 @@ const BottomNav: React.FC<Props> = ({ currentTab, onTabChange, disabled }) => {
   );
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#dee0e3] pb-safe pt-2 px-6 flex justify-between z-30 max-w-md mx-auto">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#dee0e3] pb-safe pt-2 px-4 flex justify-between z-30 max-w-md mx-auto">
        <NavItem tab={TabView.WORK} icon={Briefcase} label="搬砖" />
        <NavItem tab={TabView.RESUME} icon={FileText} label="简历" />
-       <NavItem tab={TabView.SHOP} icon={ShoppingBag} label="商店" />
+       <NavItem tab={TabView.SHOP} icon={ShoppingBag} label="杂货铺" />
+       <NavItem tab={TabView.HISTORY} icon={History} label="回顾" />
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
@@ -75,33 +76,33 @@ export enum Location {
   MEETING_ROOM = 'MEETING_ROOM',
   BOSS_OFFICE = 'BOSS_OFFICE',
   HOME = 'HOME',
-  HOSPITAL = 'HOSPITAL' // New
+  HOSPITAL = 'HOSPITAL'
 }
 
 export enum EventCategory {
   ROUTINE = 'ROUTINE',   
-  CHOICE = 'CHOICE',     // Career Decision
-  FATE = 'FATE',         // Major Turn
+  CHOICE = 'CHOICE',     
+  FATE = 'FATE',         
   CRISIS = 'CRISIS',     
   SMALL_WEEK = 'SMALL_WEEK',
   NPC_INTERACTION = 'NPC_INTERACTION',
-  CHAINED = 'CHAINED'    // New: Low stat triggers
+  CHAINED = 'CHAINED'
 }
 
 export enum EventRarity {
-    COMMON = 'COMMON',   // Neutral/Bad (50%)
-    RARE = 'RARE',       // Good (30%)
-    EPIC = 'EPIC'        // Very Good (20%)
+    COMMON = 'COMMON',   
+    RARE = 'RARE',       
+    EPIC = 'EPIC'        
 }
 
 export interface Buff {
     id: string;
     name: string;
     description: string;
-    duration: number; // Weeks remaining
+    duration: number; 
     effect: {
-        salaryMod?: number; // 1.1 = +10%
-        staminaCostMod?: number; // 1.2 = +20% cost
+        salaryMod?: number; 
+        staminaCostMod?: number; 
         sanityCostMod?: number;
         luckMod?: number;
     };
@@ -109,34 +110,23 @@ export interface Buff {
 }
 
 export interface GameStats {
-  // Core Resources
   stamina: number; 
   maxStamina: number; 
   sanity: number;
   maxSanity: number; 
   sanityRate: number; 
-  
-  // Economy
   money: number;
   salary: number;    
   expenses: number; 
-
-  // Progress
   level: number;
   exp: number;
   week: number;      
   risk: number;
-  
-  // Context
   industry: IndustryType; 
-
-  // Attributes & Traits
   attributes: Attributes;
   titles: string[]; 
   relationships: Relationships; 
-  activeBuffs: Buff[]; // New
-  
-  // Metadata / Counters
+  activeBuffs: Buff[];
   techEventCount: number; 
   debtWeeks: number; 
   location: Location;
@@ -152,10 +142,10 @@ export interface OptionEffect {
   money?: number;
   exp?: number;
   risk?: number;
-  level?: number; // New: Allow events to change rank directly
+  level?: number;
   attributes?: Partial<Attributes>;
   relationships?: Partial<Relationships>; 
-  addBuff?: Buff; // New
+  addBuff?: Buff;
   message: string;
 }
 
@@ -168,9 +158,9 @@ export interface GameOption {
 export interface GameEvent {
   id: string;
   category: EventCategory;
-  rarity?: EventRarity; // New for Luck system
+  rarity?: EventRarity;
   location: Location; 
-  industry?: IndustryType; // Null means universal
+  industry?: IndustryType; 
   title: string;
   description: string;
   options: GameOption[];
@@ -201,7 +191,8 @@ export enum GameState {
 export enum TabView {
   WORK = 'WORK',
   RESUME = 'RESUME',
-  SHOP = 'SHOP'
+  SHOP = 'SHOP',
+  HISTORY = 'HISTORY'
 }
 
 export const LEVELS = [
@@ -222,8 +213,27 @@ export interface TitleConfig {
     buff: string;
 }
 
+export interface GameRecord {
+  date: string;
+  industry: IndustryType;
+  week: number;
+  money: number;
+  level: number;
+  ending: string;
+  victory: boolean;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  desc: string;
+  unlocked: boolean;
+  icon: string;
+}
+
 export interface MetaData {
     totalCareerPoints: number;
     unlockedBadges: string[];
     highScoreWeeks: number;
+    gameHistory: GameRecord[];
 }
