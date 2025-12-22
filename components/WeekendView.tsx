@@ -1,13 +1,14 @@
 import React from 'react';
 import { CONFIG } from '../constants';
-import { BedDouble, BookOpen, Banknote, Beer, AlertTriangle } from 'lucide-react';
+import { BedDouble, BookOpen, Banknote, Beer, AlertTriangle, TrendingUp, Laptop2 } from 'lucide-react';
 
 interface Props {
-  onSelect: (choice: 'SLEEP' | 'STUDY' | 'GIG' | 'SOCIAL') => void;
+  onSelect: (choice: 'SLEEP' | 'STUDY' | 'GIG' | 'SOCIAL' | 'INVEST' | 'OUTSOURCE') => void;
   isSmallWeek: boolean;
+  canOutsource: boolean;
 }
 
-const WeekendView: React.FC<Props> = ({ onSelect, isSmallWeek }) => {
+const WeekendView: React.FC<Props> = ({ onSelect, isSmallWeek, canOutsource }) => {
   
   if (isSmallWeek) {
       return (
@@ -58,6 +59,29 @@ const WeekendView: React.FC<Props> = ({ onSelect, isSmallWeek }) => {
             </div>
          </button>
 
+         {/* Wealth Management */}
+         <button onClick={() => onSelect('INVEST')} className="bg-white p-4 rounded-xl border border-[#dee0e3] shadow-sm flex items-center hover:border-[#3370ff] transition-all">
+             <div className="bg-red-100 p-3 rounded-full mr-4 text-red-600">
+                 <TrendingUp size={24} />
+             </div>
+             <div className="text-left flex-1">
+                 <div className="font-bold text-[#1f2329]">理财投资</div>
+                 <div className="text-xs text-[#646a73] mt-1">购买期权或基金 (高风险高回报)</div>
+             </div>
+         </button>
+
+         {canOutsource && (
+             <button onClick={() => onSelect('OUTSOURCE')} className="bg-white p-4 rounded-xl border border-[#dee0e3] shadow-sm flex items-center hover:border-[#3370ff] transition-all">
+                 <div className="bg-indigo-100 p-3 rounded-full mr-4 text-indigo-600">
+                     <Laptop2 size={24} />
+                 </div>
+                 <div className="text-left flex-1">
+                     <div className="font-bold text-[#1f2329]">接外包 (Tech &gt; 15)</div>
+                     <div className="text-xs text-[#646a73] mt-1">双倍工资收益, 体力-50</div>
+                 </div>
+             </button>
+         )}
+
          <button onClick={() => onSelect('STUDY')} className="bg-white p-4 rounded-xl border border-[#dee0e3] shadow-sm flex items-center hover:border-[#3370ff] transition-all">
             <div className="bg-purple-100 p-3 rounded-full mr-4 text-purple-600">
                <BookOpen size={24} />
@@ -84,7 +108,7 @@ const WeekendView: React.FC<Props> = ({ onSelect, isSmallWeek }) => {
             </div>
             <div className="text-left flex-1">
                <div className="font-bold text-[#1f2329]">社交聚会</div>
-               <div className="text-xs text-[#646a73] mt-1">心智+{CONFIG.WEEKEND_SOCIAL_SANITY}, 金钱-{CONFIG.WEEKEND_SOCIAL_COST}, 概率加Luck</div>
+               <div className="text-xs text-[#646a73] mt-1">心智+{CONFIG.WEEKEND_SOCIAL_SANITY}, 金钱-{CONFIG.WEEKEND_SOCIAL_COST}</div>
             </div>
          </button>
       </div>

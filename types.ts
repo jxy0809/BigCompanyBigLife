@@ -1,39 +1,125 @@
 import React from 'react';
+import { LucideIcon } from 'lucide-react';
+
+export enum IndustryType {
+  INTERNET = 'INTERNET',
+  REAL_ESTATE = 'REAL_ESTATE',
+  PHARMA = 'PHARMA',
+  POLICE = 'POLICE',
+  DESIGN = 'DESIGN'
+}
+
+export interface IndustryTheme {
+  primaryColor: string;
+  secondaryColor: string;
+  bgColor: string;
+  textColor: string;
+}
+
+export interface IndustryText {
+  currency: string; 
+  progress: string; 
+  overtime: string; 
+  bonus: string;    
+  fired: string;    
+  levelName: string; 
+}
+
+export interface NpcConfig {
+  id: string;
+  name: string;
+  role: string;
+  desc: string;
+}
+
+export interface IndustryConfig {
+  type: IndustryType;
+  name: string;
+  description: string;
+  theme: IndustryTheme;
+  text: IndustryText;
+  npcs: {
+    boss: NpcConfig;
+    colleague: NpcConfig;
+    hr: NpcConfig;
+  };
+  modifiers: {
+    salaryMultiplier: number;
+    initialSanityPenalty: number;
+    staminaBonus: number;
+    maxSanityCap: number;
+    smallWeek: boolean; 
+    eqSalaryScaling: boolean; 
+    techSalaryGate: boolean; 
+    weeklySanityDrain: number; 
+    luckBonus: boolean; 
+  };
+}
 
 export interface Attributes {
-  grind: number;  // 耐艹
-  eq: number;     // 情商
-  tech: number;   // 技术
-  health: number; // 体质
-  luck: number;   // 灵气
+  grind: number;  
+  eq: number;     
+  tech: number;   
+  health: number; 
+  luck: number;   
+}
+
+export interface Relationships {
+  boss: number;      
+  colleague: number; 
+  hr: number;        
 }
 
 export enum Location {
   WORKSTATION = 'WORKSTATION',
   MEETING_ROOM = 'MEETING_ROOM',
   BOSS_OFFICE = 'BOSS_OFFICE',
-  HOME = 'HOME'
+  HOME = 'HOME',
+  HOSPITAL = 'HOSPITAL' // New
 }
 
 export enum EventCategory {
-  ROUTINE = 'ROUTINE',   // 常规 (60%)
-  SURPRISE = 'SURPRISE', // 惊喜 (15%)
-  CRISIS = 'CRISIS',     // 危机 (15%)
-  ENCOUNTER = 'ENCOUNTER',// 奇遇 (10%)
-  SMALL_WEEK = 'SMALL_WEEK' // 小周专属 (Specific to Small Weeks)
+  ROUTINE = 'ROUTINE',   
+  CHOICE = 'CHOICE',     // Career Decision
+  FATE = 'FATE',         // Major Turn
+  CRISIS = 'CRISIS',     
+  SMALL_WEEK = 'SMALL_WEEK',
+  NPC_INTERACTION = 'NPC_INTERACTION',
+  CHAINED = 'CHAINED'    // New: Low stat triggers
+}
+
+export enum EventRarity {
+    COMMON = 'COMMON',   // Neutral/Bad (50%)
+    RARE = 'RARE',       // Good (30%)
+    EPIC = 'EPIC'        // Very Good (20%)
+}
+
+export interface Buff {
+    id: string;
+    name: string;
+    description: string;
+    duration: number; // Weeks remaining
+    effect: {
+        salaryMod?: number; // 1.1 = +10%
+        staminaCostMod?: number; // 1.2 = +20% cost
+        sanityCostMod?: number;
+        luckMod?: number;
+    };
+    isNegative: boolean;
 }
 
 export interface GameStats {
   // Core Resources
   stamina: number; 
-  maxStamina: number; // Derived from Health (50 + Health * 8)
+  maxStamina: number; 
   sanity: number;
-  sanityRate: number; // Derived from EQ
+  maxSanity: number; 
+  sanityRate: number; 
   
   // Economy
   money: number;
   salary: number;    
-  expenses: number; // Dynamic weekly expenses
+  expenses: number; 
 
   // Progress
   level: number;
@@ -41,16 +127,23 @@ export interface GameStats {
   week: number;      
   risk: number;
   
+  // Context
+  industry: IndustryType; 
+
   // Attributes & Traits
   attributes: Attributes;
-  titles: string[]; // Unlocked titles
+  titles: string[]; 
+  relationships: Relationships; 
+  activeBuffs: Buff[]; // New
   
   // Metadata / Counters
-  techEventCount: number; // For mastery tracking
-  debtWeeks: number; // Replaces bankruptcyCount for clearer logic
+  techEventCount: number; 
+  debtWeeks: number; 
   location: Location;
-  overtimeHours: number; // Track for final report
-  isSmallWeek: boolean; // Current week status
+  overtimeHours: number; 
+  isSmallWeek: boolean; 
+  reviveUsed: boolean; 
+  legacyPointsUsed: number; 
 }
 
 export interface OptionEffect {
@@ -59,7 +152,10 @@ export interface OptionEffect {
   money?: number;
   exp?: number;
   risk?: number;
-  attributes?: Partial<Attributes>; 
+  level?: number; // New: Allow events to change rank directly
+  attributes?: Partial<Attributes>;
+  relationships?: Partial<Relationships>; 
+  addBuff?: Buff; // New
   message: string;
 }
 
@@ -72,7 +168,9 @@ export interface GameOption {
 export interface GameEvent {
   id: string;
   category: EventCategory;
+  rarity?: EventRarity; // New for Luck system
   location: Location; 
+  industry?: IndustryType; // Null means universal
   title: string;
   description: string;
   options: GameOption[];
@@ -90,6 +188,7 @@ export interface ShopItem {
 
 export enum GameState {
   START = 'START',
+  INDUSTRY_SELECT = 'INDUSTRY_SELECT',
   CREATION = 'CREATION',
   WEEK_START = 'WEEK_START', 
   EVENT = 'EVENT',
@@ -106,13 +205,13 @@ export enum TabView {
 }
 
 export const LEVELS = [
-  { id: 1, title: 'T4 实习生', salary: 3000 },
-  { id: 2, title: 'T5 初级工程师', salary: 5000 },
-  { id: 3, title: 'P5 进阶工程师', salary: 8000 },
-  { id: 4, title: 'P6 资深工程师', salary: 12000 },
-  { id: 5, title: 'P7 技术专家', salary: 20000 },
-  { id: 6, title: 'P8 高级专家', salary: 35000 },
-  { id: 7, title: 'P9 资深总监', salary: 60000 },
+  { id: 1, title: 'Lv1', salary: 3000 },
+  { id: 2, title: 'Lv2', salary: 5000 },
+  { id: 3, title: 'Lv3', salary: 8000 },
+  { id: 4, title: 'Lv4', salary: 12000 },
+  { id: 5, title: 'Lv5', salary: 20000 },
+  { id: 6, title: 'Lv6', salary: 35000 },
+  { id: 7, title: 'Lv7', salary: 60000 },
 ];
 
 export interface TitleConfig {
@@ -121,4 +220,10 @@ export interface TitleConfig {
     condition: (stats: GameStats) => boolean;
     description: string;
     buff: string;
+}
+
+export interface MetaData {
+    totalCareerPoints: number;
+    unlockedBadges: string[];
+    highScoreWeeks: number;
 }

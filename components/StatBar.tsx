@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { GameStats, LEVELS, Location } from '../types';
+import { INDUSTRIES } from '../constants';
 import { Battery, Brain, Wallet, Briefcase, TrendingUp, AlertCircle, Calendar } from 'lucide-react';
 
 interface Props {
@@ -32,28 +33,31 @@ const AnimatedNumber: React.FC<{ value: number; prefix?: string; suffix?: string
 };
 
 const StatBar: React.FC<Props> = ({ stats }) => {
+  const indConfig = INDUSTRIES[stats.industry];
   const currentLevel = LEVELS.find(l => l.id === stats.level) || LEVELS[0];
-  const maxStamina = stats.maxStamina; // Use variable max
-  const maxSanity = 100;
+  const maxStamina = stats.maxStamina;
+  const maxSanity = stats.maxSanity;
 
   // Bankruptcy Warning
   const isDebt = stats.money < 0;
+  
+  const themeColor = indConfig.theme.primaryColor;
 
   return (
     <div className="bg-white px-4 py-3 shadow-sm sticky top-0 z-20 border-b border-[#dee0e3] select-none">
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center space-x-2">
-           <div className={`p-1.5 rounded-lg shadow-sm flex items-center space-x-1 ${stats.isSmallWeek ? 'bg-red-500 text-white' : 'bg-[#3370ff] text-white'}`}>
+           <div className="p-1.5 rounded-lg shadow-sm flex items-center space-x-1 text-white" style={{ backgroundColor: stats.isSmallWeek ? '#f54a45' : themeColor }}>
              <Calendar size={14} />
-             <span className="text-[10px] font-bold">{stats.isSmallWeek ? '小周(单休)' : '大周(双休)'}</span>
+             <span className="text-[10px] font-bold">{stats.isSmallWeek ? '大小周' : '双休'}</span>
            </div>
            <div>
              <h2 className="text-sm font-bold text-[#1f2329]">Week {stats.week}/52</h2>
            </div>
         </div>
         <div className="flex flex-col items-end">
-             <span className="text-xs font-bold text-[#3370ff] bg-[#e1eaff] px-2 py-0.5 rounded text-right">
-              {currentLevel.title}
+             <span className="text-xs font-bold bg-[#e1eaff] px-2 py-0.5 rounded text-right" style={{ color: themeColor }}>
+              {indConfig.text.levelName}{stats.level}
             </span>
              {isDebt && (
                  <span className="text-[10px] text-red-500 font-bold flex items-center animate-pulse mt-1">
@@ -78,12 +82,12 @@ const StatBar: React.FC<Props> = ({ stats }) => {
          {/* Sanity */}
          <div className="bg-[#f5f6f7] rounded-lg p-2 flex flex-col justify-between relative overflow-hidden group">
             <div className="flex items-center justify-between z-10 relative">
-               <div className="flex items-center text-[#1f2329] text-xs font-medium">
-                  <Brain size={12} className="mr-1 text-[#3370ff]" /> 心智
+               <div className="flex items-center text-[#1f2329] text-xs font-medium" style={{ color: themeColor }}>
+                  <Brain size={12} className="mr-1" /> 心智
                </div>
                <AnimatedNumber value={Math.floor(stats.sanity)} colorClass="text-xs font-bold" />
             </div>
-            <div className="absolute bottom-0 left-0 h-1 bg-[#3370ff] transition-all duration-500 rounded-bl-lg rounded-br-lg" style={{ width: `${(Math.max(0, stats.sanity) / maxSanity) * 100}%` }}></div>
+            <div className="absolute bottom-0 left-0 h-1 transition-all duration-500 rounded-bl-lg rounded-br-lg" style={{ width: `${(Math.max(0, stats.sanity) / maxSanity) * 100}%`, backgroundColor: themeColor }}></div>
          </div>
 
          {/* Money */}
@@ -91,7 +95,7 @@ const StatBar: React.FC<Props> = ({ stats }) => {
             <div className="flex items-center text-[#1f2329] text-xs font-medium">
                <Wallet size={12} className={`mr-1 ${isDebt ? 'text-red-500' : 'text-[#ffc60a]'}`} /> 资产
             </div>
-            <AnimatedNumber value={Math.floor(stats.money)} prefix="¥" colorClass={`text-xs font-bold truncate ${isDebt ? 'text-red-600' : ''}`} />
+            <AnimatedNumber value={Math.floor(stats.money)} suffix={indConfig.text.currency} colorClass={`text-xs font-bold truncate ${isDebt ? 'text-red-600' : ''}`} />
          </div>
       </div>
     </div>

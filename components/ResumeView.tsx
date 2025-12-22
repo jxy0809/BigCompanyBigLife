@@ -1,12 +1,13 @@
 import React from 'react';
-import { GameStats, LEVELS } from '../types';
-import { Shield, Smile, Cpu, Heart, Sparkles, User, Medal } from 'lucide-react';
+import { GameStats, LEVELS, IndustryType } from '../types';
+import { INDUSTRIES } from '../constants';
+import { Shield, Smile, Cpu, Heart, Sparkles, User, Medal, Users, Zap } from 'lucide-react';
 
 interface Props {
   stats: GameStats;
 }
 
-const RadarChart: React.FC<{ attributes: GameStats['attributes'] }> = ({ attributes }) => {
+const RadarChart: React.FC<{ attributes: GameStats['attributes'], color: string }> = ({ attributes, color }) => {
     const size = 200;
     const center = size / 2;
     const radius = 70;
@@ -50,7 +51,7 @@ const RadarChart: React.FC<{ attributes: GameStats['attributes'] }> = ({ attribu
                 })}
                 
                 {/* Data Blob */}
-                <polygon points={points} fill="rgba(51, 112, 255, 0.2)" stroke="#3370ff" strokeWidth="2" />
+                <polygon points={points} fill={`${color}33`} stroke={color} strokeWidth="2" />
                 
                 {/* Labels */}
                 {stats.map((stat, i) => {
@@ -70,8 +71,22 @@ const RadarChart: React.FC<{ attributes: GameStats['attributes'] }> = ({ attribu
     )
 }
 
+const RelationBar: React.FC<{ label: string; role: string; value: number; color: string }> = ({ label, role, value, color }) => (
+    <div className="mb-2">
+        <div className="flex justify-between text-xs mb-1">
+            <span className="text-[#646a73]">{label} <span className="opacity-50">({role})</span></span>
+            <span className="font-bold text-[#1f2329]">{value}/100</span>
+        </div>
+        <div className="h-2 bg-[#f5f6f7] rounded-full overflow-hidden">
+            <div className={`h-full ${color} transition-all duration-500`} style={{ width: `${Math.min(100, Math.max(0, value))}%` }}></div>
+        </div>
+    </div>
+);
+
 const ResumeView: React.FC<Props> = ({ stats }) => {
+  const indConfig = INDUSTRIES[stats.industry];
   const currentLevel = LEVELS.find(l => l.id === stats.level) || LEVELS[0];
+  const themeColor = indConfig.theme.primaryColor;
 
   const StatRow = ({ label, value, icon: Icon, color }: any) => (
     <div className="flex items-center justify-between py-2 border-b border-[#f5f6f7] last:border-0">
@@ -89,16 +104,16 @@ const ResumeView: React.FC<Props> = ({ stats }) => {
     <div className="p-4 space-y-4 animate-fade-in-up pb-24">
        {/* Header Card */}
        <div className="bg-white rounded-xl p-6 shadow-sm border border-[#dee0e3] text-center relative overflow-hidden">
-          <div className="w-16 h-16 bg-[#3370ff] rounded-full flex items-center justify-center mx-auto mb-3 shadow-md z-10 relative">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 shadow-md z-10 relative" style={{backgroundColor: themeColor}}>
              <User size={32} className="text-white" />
           </div>
-          <h2 className="text-lg font-bold text-[#1f2329]">{currentLevel.title}</h2>
+          <h2 className="text-lg font-bold text-[#1f2329]">{indConfig.text.levelName}{currentLevel.id} {indConfig.name}从业者</h2>
           <p className="text-[#646a73] text-xs mt-1">入职第 {stats.week} 周</p>
           
           <div className="mt-4 bg-[#f5f6f7] rounded-full h-1.5 overflow-hidden relative">
              <div 
-               className="absolute left-0 top-0 h-full bg-[#3370ff]" 
-               style={{ width: `${Math.min(100, (stats.exp / (stats.level * 100)) * 100)}%` }}
+               className="absolute left-0 top-0 h-full" 
+               style={{ width: `${Math.min(100, (stats.exp / (stats.level * 100)) * 100)}%`, backgroundColor: themeColor }}
              ></div>
           </div>
           <div className="flex justify-between text-[10px] text-[#8f959e] mt-1">
@@ -107,10 +122,40 @@ const ResumeView: React.FC<Props> = ({ stats }) => {
           </div>
        </div>
 
+       {/* Active Buffs */}
+       {stats.activeBuffs.length > 0 && (
+           <div className="bg-white rounded-xl p-4 shadow-sm border border-[#dee0e3]">
+             <h3 className="text-xs font-bold text-[#646a73] mb-3 uppercase tracking-wider flex items-center">
+                 <Zap size={14} className="mr-1" /> 当前状态
+             </h3>
+             <div className="space-y-2">
+                 {stats.activeBuffs.map(buff => (
+                     <div key={buff.id} className={`flex justify-between items-center p-2 rounded-lg ${buff.isNegative ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                         <div>
+                             <div className="text-xs font-bold">{buff.name}</div>
+                             <div className="text-[10px] opacity-80">{buff.description}</div>
+                         </div>
+                         <div className="text-xs font-bold">{buff.duration}周</div>
+                     </div>
+                 ))}
+             </div>
+           </div>
+       )}
+
+       {/* NPC Relations */}
+       <div className="bg-white rounded-xl p-4 shadow-sm border border-[#dee0e3]">
+          <h3 className="text-xs font-bold text-[#646a73] mb-3 uppercase tracking-wider flex items-center">
+             <Users size={14} className="mr-1" /> 职场人脉
+          </h3>
+          <RelationBar label={indConfig.npcs.boss.name} role={indConfig.npcs.boss.role} value={stats.relationships.boss} color="bg-orange-500" />
+          <RelationBar label={indConfig.npcs.colleague.name} role={indConfig.npcs.colleague.role} value={stats.relationships.colleague} color="bg-blue-500" />
+          <RelationBar label={indConfig.npcs.hr.name} role={indConfig.npcs.hr.role} value={stats.relationships.hr} color="bg-pink-500" />
+       </div>
+
        {/* Radar Chart */}
        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#dee0e3]">
           <h3 className="text-xs font-bold text-[#646a73] mb-2 uppercase tracking-wider">能力雷达</h3>
-          <RadarChart attributes={stats.attributes} />
+          <RadarChart attributes={stats.attributes} color={themeColor} />
           <div className="grid grid-cols-2 gap-x-4">
             <StatRow label="Tech" value={stats.attributes.tech} icon={Cpu} color={{bg: 'bg-blue-100', text: 'text-blue-500'}} />
             <StatRow label="Grind" value={stats.attributes.grind} icon={Shield} color={{bg: 'bg-gray-100', text: 'text-gray-600'}} />
@@ -120,32 +165,16 @@ const ResumeView: React.FC<Props> = ({ stats }) => {
           </div>
        </div>
 
-       {/* Titles */}
-       {stats.titles.length > 0 && (
-         <div className="bg-white rounded-xl p-4 shadow-sm border border-[#dee0e3]">
-             <h3 className="text-xs font-bold text-[#646a73] mb-3 uppercase tracking-wider flex items-center">
-                 <Medal size={14} className="mr-1" /> 获得称号
-             </h3>
-             <div className="flex flex-wrap gap-2">
-                 {stats.titles.map((t, i) => (
-                     <span key={i} className="px-3 py-1 bg-yellow-50 text-yellow-700 text-xs font-bold rounded-full border border-yellow-200 shadow-sm">
-                         {t}
-                     </span>
-                 ))}
-             </div>
-         </div>
-       )}
-       
        {/* Financials */}
        <div className="bg-white rounded-xl p-4 shadow-sm border border-[#dee0e3]">
            <h3 className="text-xs font-bold text-[#646a73] mb-2 uppercase tracking-wider">财务状况</h3>
            <div className="flex justify-between mb-2">
                <span className="text-sm text-[#646a73]">当前周薪</span>
-               <span className="text-sm font-bold text-[#1f2329]">¥{stats.salary}</span>
+               <span className="text-sm font-bold text-[#1f2329]">{stats.salary}{indConfig.text.currency}</span>
            </div>
             <div className="flex justify-between mb-2">
                <span className="text-sm text-[#646a73]">每周开销</span>
-               <span className="text-sm font-bold text-[#f54a45]">-¥{Math.floor(stats.expenses)}</span>
+               <span className="text-sm font-bold text-[#f54a45]">- {Math.floor(stats.expenses)}{indConfig.text.currency}</span>
            </div>
            <div className="flex justify-between">
                <span className="text-sm text-[#646a73]">被优化风险</span>
