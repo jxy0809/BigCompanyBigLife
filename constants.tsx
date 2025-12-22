@@ -1,204 +1,190 @@
-import { GameEvent, GameStats } from './types';
+import { GameEvent, GameStats, Location, ShopItem } from './types';
+import { Coffee, Gamepad2, BookOpen, Pill, Headphones } from 'lucide-react';
 
-// Default start, attributes will be overwritten by CharacterCreation
+export const CONFIG = {
+  MAX_WEEKS: 52,
+  BASE_EXPENSE: 2000,
+  REVENGE_SPENDING_THRESHOLD: 30, // Sanity below 30 triggers spending
+  REVENGE_SPENDING_AMOUNT: 1500,
+  BANKRUPTCY_LIMIT: 2, // Weeks allowed in debt
+  WEEKEND_SLEEP_STAMINA: 40,
+  WEEKEND_SLEEP_SANITY: 15,
+  WEEKEND_STUDY_COST: 1500,
+  WEEKEND_GIG_MONEY: 3000,
+  WEEKEND_GIG_STAMINA_COST: 40,
+  WEEKEND_SOCIAL_SANITY: 30,
+  WEEKEND_SOCIAL_COST: 1000,
+};
+
 export const INITIAL_STATS: GameStats = {
   stamina: 100,
   sanity: 100,
-  money: 2000,
+  money: 5000, // Starting bonus
+  salary: 3000, // T4 Salary
   level: 1, 
   exp: 0,
-  days: 1,
+  week: 1,
   risk: 0,
+  bankruptcyCount: 0,
+  location: Location.WORKSTATION,
   attributes: { grind: 5, eq: 5, tech: 5, health: 5, luck: 5 }
 };
 
+export const SHOP_ITEMS: ShopItem[] = [
+  {
+    id: 'coffee',
+    name: '冰美式',
+    description: '续命水。体力+10',
+    price: 30,
+    effect: (s) => ({ stamina: Math.min(100 + s.attributes.health * 2, s.stamina + 10) }),
+    icon: Coffee
+  },
+  {
+    id: 'game',
+    name: '3A大作',
+    description: '短暂逃避现实。心智+15',
+    price: 400,
+    effect: (s) => ({ sanity: Math.min(100 + s.attributes.grind * 2, s.sanity + 15) }),
+    icon: Gamepad2
+  },
+  {
+    id: 'course',
+    name: '极客时间专栏',
+    description: '虽然买来不一定看。经验+50',
+    price: 200,
+    effect: (s) => ({ exp: s.exp + 50 }),
+    icon: BookOpen
+  },
+  {
+    id: 'supplements',
+    name: '深海鱼油',
+    description: '感觉脑子长出来了。体质+1',
+    price: 800,
+    effect: (s) => ({ attributes: { ...s.attributes, health: s.attributes.health + 1 } }),
+    icon: Pill
+  },
+  {
+    id: 'headphones',
+    name: '降噪耳机',
+    description: '物理屏蔽傻逼。耐艹+1',
+    price: 2000,
+    effect: (s) => ({ attributes: { ...s.attributes, grind: s.attributes.grind + 1 } }),
+    icon: Headphones
+  }
+];
+
 export const EVENTS: GameEvent[] = [
+  // --- WORKSTATION EVENTS ---
   {
-    id: 'e1',
-    title: '红包雨',
-    description: '老板在全员群发了一个随机金额红包，并@所有人“辛苦了”。',
+    id: 'w_bug',
+    location: Location.WORKSTATION,
+    title: '紧急 Bug',
+    description: '测试在群里疯狂 @你，线上出现白屏，老板正在看着群。',
     options: [
       {
-        label: '拼手速抢红包',
+        label: '快速修复',
         effect: (stats) => {
-          // Luck determines outcome
-          const luckBonus = stats.attributes.luck * 5; 
-          const amount = Math.floor(Math.random() * 10) + luckBonus > 40 ? 200 : 0.01;
-          const msg = amount > 100 ? `你运气爆棚（灵气 ${stats.attributes.luck}），抢到了运气王！` : '你抢到了0.01元，感觉像个小丑。';
-          return { stamina: -2, sanity: amount > 100 ? 5 : -5, money: amount, message: msg };
+          const cost = Math.max(5, 30 - stats.attributes.tech * 1.5);
+          return { stamina: -cost, exp: 10, message: '你凭借肌肉记忆迅速定位并修复了问题。' };
         }
       },
       {
-        label: '装没看见',
-        effect: () => ({ stamina: 0, sanity: 5, risk: 2, message: '你保持了高冷，但总觉得HR在后台看数据。' })
+        label: '甩锅给后端',
+        requires: (s) => s.attributes.eq > 8,
+        effect: () => ({ sanity: 5, risk: -2, message: '“接口返回的数据格式不对。” 你成功转移了矛盾。' })
       }
     ]
   },
   {
-    id: 'e2',
-    title: '周五突袭',
-    description: '周五下午 17:55，产品经理走过来：“简单对齐一下这个需求，很快的。”',
+    id: 'w_code',
+    location: Location.WORKSTATION,
+    title: '屎山代码',
+    description: '你接手了离职同事的代码，里面充满了 magic number 和拼音变量。',
     options: [
       {
-        label: '“好的，马上来”',
-        effect: (stats) => {
-          // Tech reduces stamina cost
-          const techSave = stats.attributes.tech * 1.5;
-          const cost = Math.max(5, 25 - techSave);
-          return { 
-            stamina: -cost, 
-            sanity: -10, 
-            exp: 10, 
-            message: stats.attributes.tech > 10 
-              ? `凭借高超的技术（智商 ${stats.attributes.tech}），你一小时就搞定了。` 
-              : '“很快”意味着你干到了凌晨两点。' 
-          };
-        }
+        label: '重构！(Tech > 10)',
+        requires: (s) => s.attributes.tech >= 10,
+        effect: () => ({ stamina: -20, sanity: 10, exp: 40, message: '你把代码重构得赏心悦目，虽然没人会在意。' })
       },
       {
-        label: '高情商推脱',
-        requires: (stats) => stats.attributes.eq >= 8, // Need EQ > 8 to see this
-        effect: () => ({ stamina: 0, sanity: 5, risk: 0, message: '你用巧妙的话术（情商>8）让PM觉得这事下周做更好。' })
-      },
-      {
-        label: '尿遁溜走',
-        effect: () => ({ stamina: 5, sanity: 10, risk: 10, message: '你成功逃脱，但PM的眼神像是在看死人。' })
+        label: '能跑就行',
+        effect: () => ({ sanity: -5, risk: 2, message: '你在屎山上又堆了一层，祈祷别在自己手里崩掉。' })
       }
     ]
   },
+
+  // --- MEETING ROOM EVENTS ---
   {
-    id: 'e_crit',
-    title: '领导的“建议”',
-    description: 'P9 大佬在周会上公开点名批评你的项目进度：“我感觉你没有思考清楚底层逻辑。”',
+    id: 'm_pua',
+    location: Location.MEETING_ROOM,
+    title: '项目复盘会',
+    description: '领导：“我觉得你最近投入度不够，没有把这个项目当成自己的孩子。”',
     options: [
       {
-        label: '滑跪认错',
-        effect: () => ({ sanity: -15, risk: -2, message: '你不停道歉，像个犯错的小学生。' })
+        label: '沉默是金',
+        effect: () => ({ sanity: -15, stamina: -5, message: '你默默忍受了半小时的输出，感觉乳腺不通了。' })
       },
       {
-        label: '赋能型回复 (需要情商 12)',
-        requires: (stats) => stats.attributes.eq >= 12,
-        effect: () => ({ 
-          sanity: 5, 
-          risk: -5, 
-          exp: 20,
-          message: '你用一套“抓手/闭环/心智”的黑话把P9绕晕了，他觉得你很有潜力。' 
-        })
-      },
-      {
-        label: '硬刚',
-        effect: () => ({ sanity: 10, risk: 20, message: '你爽了，但你的职业生涯可能要结束了。' })
+        label: '阴阳怪气 (EQ > 12)',
+        requires: (s) => s.attributes.eq > 12,
+        effect: () => ({ sanity: 5, risk: 5, message: '“好的老板，我会把公司当家，今晚就睡会议室。” 全场尴尬。' })
       }
     ]
   },
   {
-    id: 'e3',
-    title: '日报周报月报',
-    description: '由于团队产出不透明，领导要求开始写“小时报”。',
-    options: [
-      {
-        label: '用脚本自动生成',
-        requires: (stats) => stats.attributes.tech >= 8,
-        effect: () => ({ stamina: 0, sanity: 5, exp: 5, message: '你写了个脚本（智商>8）自动应付，效率翻倍。' })
-      },
-      {
-        label: '用 AI 生成废话',
-        effect: () => ({ stamina: -5, sanity: 5, exp: 2, message: '你掌握了职场核心科技：赋能、抓手、颗粒度。' })
-      },
-      {
-        label: '认真回顾工作',
-        effect: () => ({ stamina: -15, sanity: -15, exp: 5, message: '你发现自己一天其实什么都没干，全是废会。' })
-      }
-    ]
-  },
-  {
-    id: 'e6',
-    title: '这锅谁背',
-    description: '线上出了 P0 级事故，回滚后发现是前任同事留下的坑。',
+    id: 'm_align',
+    location: Location.MEETING_ROOM,
+    title: '跨部门对齐',
+    description: '产品、运营、开发三方对齐，需求变来变去。',
     options: [
       {
         label: '据理力争',
-        effect: (stats) => {
-           const success = stats.attributes.eq > 10;
-           return success ? 
-             { stamina: -5, sanity: 5, risk: 0, message: '你据理力争（情商>10），成功把锅甩了出去。' } :
-             { stamina: -10, sanity: -10, risk: 5, message: '你试图解释，但领导觉得你在推卸责任。' };
+        effect: () => ({ stamina: -10, sanity: -10, exp: 5, message: '吵了一下午，需求终于砍掉了一半。' })
+      },
+      {
+        label: '全盘接受',
+        effect: () => ({ stamina: -20, risk: 5, message: '你接下了一个不可能完成的任务，排期排到了明年。' })
+      }
+    ]
+  },
+
+  // --- BOSS OFFICE EVENTS ---
+  {
+    id: 'b_review',
+    location: Location.BOSS_OFFICE,
+    title: '绩效谈话',
+    description: '老板看着你的绩效表，若有所思。',
+    options: [
+      {
+        label: '展示数据',
+        effect: (s) => {
+            const success = s.attributes.tech + s.attributes.grind > 20;
+            return success 
+                ? { exp: 50, money: 500, message: '老板对你的产出表示满意，发了500块奖金。' }
+                : { risk: 10, sanity: -10, message: '老板觉得你的产出没有“业务体感”。' };
         }
       },
       {
-        label: '立正挨打',
-        effect: () => ({ stamina: -10, sanity: -20, exp: 20, message: '态度诚恳，领导觉得你“有担当”。心智大损。' })
+        label: '哭惨',
+        requires: (s) => s.attributes.eq > 10,
+        effect: () => ({ risk: -5, message: '你讲述了加班的艰辛，老板勉励了你几句。' })
       }
     ]
   },
   {
-    id: 'e10',
-    title: '工位调整',
-    description: '行政通知要调整工位，你的新位置正对着总监办公室的玻璃门。',
+    id: 'b_layoff',
+    location: Location.BOSS_OFFICE,
+    title: '裁员风声',
+    description: '隔壁组整个被端了，老板把你叫进去关上了门。',
     options: [
       {
-        label: '极度专注 (需要耐艹 10)',
-        requires: (stats) => stats.attributes.grind >= 10,
-        effect: () => ({ stamina: -10, exp: 20, message: '你心理素质极强（耐艹>10），完全无视了背后的视线。' })
+        label: '表忠心',
+        effect: () => ({ stamina: -10, sanity: -10, risk: -10, message: '你承诺接下来一个月996，暂时安全了。' })
       },
       {
-        label: '买个防窥膜',
-        effect: (s) => s.money >= 50 ? 
-          { money: -50, sanity: -5, message: '物理防御+1，但心理压力+100。' } : 
-          { sanity: -15, risk: 5, message: '没钱买膜，摸鱼变得极其困难。' }
+        label: '无所谓',
+        effect: () => ({ risk: 10, sanity: 10, message: '你表现出的淡定让老板摸不清底细，反而不敢动你。' })
       }
     ]
-  },
-  {
-    id: 'e19',
-    title: '代码重构',
-    description: '你看着三年前的代码，仿佛在看一座摇摇欲坠的屎山。',
-    options: [
-      {
-        label: '只改当前 Bug',
-        effect: () => ({ stamina: -5, sanity: -5, exp: 2, message: '又加了一坨，屎山更高了。' })
-      },
-      {
-        label: '彻底重构 (需要技术 12)',
-        requires: (stats) => stats.attributes.tech >= 12,
-        effect: () => ({ stamina: -20, sanity: 10, exp: 50, message: '你大刀阔斧重构了模块（技术>12），代码变得赏心悦目。' })
-      },
-      {
-        label: '尝试重构但失败',
-        requires: (stats) => stats.attributes.tech < 12,
-        effect: () => ({ stamina: -40, sanity: -20, exp: 30, message: '由于技术不够，重构引发了线上 P0，被回滚了。' })
-      }
-    ]
-  },
-  {
-    id: 'e20',
-    title: '神秘的期权',
-    description: 'HR 找你谈话，说鉴于你表现优异，授予你 1000 股期权。',
-    options: [
-      {
-        label: '感恩戴德',
-        effect: () => ({ sanity: 10, stamina: 10, risk: -5, message: '你感觉自己成了公司的主人（虽然还没上市）。' })
-      },
-      {
-        label: '内心呵呵',
-        effect: () => ({ sanity: 5, message: '你清楚这玩意儿可能比废纸还便宜。' })
-      }
-    ]
-  },
-   {
-    id: 'e_gym',
-    title: '健身卡推销',
-    description: '楼下健身房跑路了，但你上周刚续了 3000 块私教课。',
-    options: [
-      {
-        label: '暴力维权 (体质 > 15)',
-        requires: (stats) => stats.attributes.health > 15,
-        effect: () => ({ stamina: -10, sanity: 10, money: 1500, message: '你凭借魁梧的身材（体质>15）吓退了老板，追回了一半学费。' })
-      },
-      {
-        label: '认栽',
-        effect: () => ({ sanity: -10, message: '就当破财免灾，反正也没空去。' })
-      }
-    ]
-  },
+  }
 ];
