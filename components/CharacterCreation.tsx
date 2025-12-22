@@ -52,37 +52,40 @@ const CharacterCreation: React.FC<Props> = ({ onComplete }) => {
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar">
-        {statConfig.map((stat) => (
-          <div key={stat.key} className="bg-white border border-[#dee0e3] p-4 rounded-xl flex items-center justify-between shadow-sm">
-             <div className="flex items-center flex-1">
-                <div className={`p-2 rounded-lg bg-opacity-10 mr-3 ${stat.color.replace('text', 'bg')}`}>
-                    <stat.icon size={20} className={stat.color} />
-                </div>
-                <div>
-                    <div className="font-bold text-[#1f2329]">{stat.label}</div>
-                    <div className="text-[10px] text-[#8f959e]">{stat.desc}</div>
-                </div>
-             </div>
-             
-             <div className="flex items-center space-x-3 bg-[#f5f6f7] rounded-lg p-1">
-                <button 
-                  onClick={() => handleChange(stat.key, -1)}
-                  disabled={attrs[stat.key] <= 1}
-                  className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm disabled:opacity-50 text-[#1f2329]"
-                >
-                  <Minus size={14} />
-                </button>
-                <span className="w-6 text-center font-bold text-[#1f2329]">{attrs[stat.key]}</span>
-                <button 
-                  onClick={() => handleChange(stat.key, 1)}
-                  disabled={points <= 0}
-                  className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm disabled:opacity-50 text-[#3370ff]"
-                >
-                  <Plus size={14} />
-                </button>
-             </div>
-          </div>
-        ))}
+        {statConfig.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div key={stat.key} className="bg-white border border-[#dee0e3] p-4 rounded-xl flex items-center justify-between shadow-sm">
+               <div className="flex items-center flex-1">
+                  <div className={`p-2 rounded-lg bg-opacity-10 mr-3 ${stat.color.replace('text', 'bg')}`}>
+                      <Icon size={20} className={stat.color} />
+                  </div>
+                  <div>
+                      <div className="font-bold text-[#1f2329]">{stat.label}</div>
+                      <div className="text-[10px] text-[#8f959e]">{stat.desc}</div>
+                  </div>
+               </div>
+               
+               <div className="flex items-center space-x-3 bg-[#f5f6f7] rounded-lg p-1">
+                  <button 
+                    onClick={() => handleChange(stat.key, -1)}
+                    disabled={attrs[stat.key] <= 1}
+                    className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm disabled:opacity-50 text-[#1f2329]"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="w-6 text-center font-bold text-[#1f2329]">{attrs[stat.key]}</span>
+                  <button 
+                    onClick={() => handleChange(stat.key, 1)}
+                    disabled={points <= 0}
+                    className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm disabled:opacity-50 text-[#3370ff]"
+                  >
+                    <Plus size={14} />
+                  </button>
+               </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-6">
