@@ -361,7 +361,7 @@ export const getEventsForIndustry = (industry: IndustryType): GameEvent[] => {
         },
         {
             id: 'routine_gossip', category: EventCategory.NPC_INTERACTION, location: Location.WORKSTATION, industry: industry, rarity: EventRarity.COMMON,
-            title: '茶水间八卦', description: '听说隔壁部门老大要被${txt.fired}了。',
+            title: '茶水间八卦', description: `听说隔壁部门老大要被${txt.fired}了。`,
             options: [
                 { label: '打听细节', effect: () => ({ relationships: { colleague: 5 }, risk: 2, message: '吃瓜群众。' }) },
                 { label: '不信谣', effect: () => ({ message: '专心工作。' }) }
