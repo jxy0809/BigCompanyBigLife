@@ -131,7 +131,7 @@ const App: React.FC = () => {
     // Metro Entry Oath
     if (industry === IndustryType.METRO) {
         startStats.activeBuffs.push(BUFFS.STABILITY(999)); // Permanent stability
-        alert("【入职宣誓】\n我志愿献身大国重器，严守工艺纪律，确保行车安全。\n获得永久Buff: 铁饭碗 (心智消耗-20%)");
+        alert("【入职宣誓】\n我志愿献身大国重器，严守工艺纪律，确保行车安全。\n获得永久Buff: 铁饭碗 (心智消耗-20%, 风险抵御-50)");
     }
     
     setStats(startStats);
@@ -207,13 +207,33 @@ const App: React.FC = () => {
     if (!currentEvent) return;
     const selectedOption = currentEvent.options[optionIndex];
     const effect = selectedOption.effect(stats);
+
+    // Apply Buff Modifiers to costs/risks
+    let staminaDelta = effect.stamina || 0;
+    let sanityDelta = effect.sanity || 0;
+    let riskDelta = effect.risk || 0;
+
+    stats.activeBuffs.forEach(buff => {
+        // Apply multipliers to negative changes (costs)
+        if (staminaDelta < 0 && buff.effect.staminaCostMod !== undefined) {
+            staminaDelta *= buff.effect.staminaCostMod;
+        }
+        if (sanityDelta < 0 && buff.effect.sanityCostMod !== undefined) {
+            sanityDelta *= buff.effect.sanityCostMod;
+        }
+        // Apply risk reduction (e.g. risk: -50) to risk increases
+        if (riskDelta > 0 && buff.effect.risk !== undefined) {
+            riskDelta = Math.max(0, riskDelta + buff.effect.risk);
+        }
+    });
+
     const newStats = {
       ...stats,
-      stamina: Math.min(stats.maxStamina, stats.stamina + (effect.stamina || 0)),
-      sanity: Math.min(stats.maxSanity, stats.sanity + (effect.sanity || 0)),
+      stamina: Math.min(stats.maxStamina, stats.stamina + staminaDelta),
+      sanity: Math.min(stats.maxSanity, stats.sanity + sanityDelta),
       money: stats.money + (effect.money || 0),
       exp: stats.exp + (effect.exp || 0),
-      risk: Math.max(0, stats.risk + (effect.risk || 0)),
+      risk: Math.max(0, stats.risk + riskDelta),
       level: Math.max(1, stats.level + (effect.level || 0)) // Prevent level 0
     };
     
@@ -236,7 +256,7 @@ const App: React.FC = () => {
     }
 
     setStats(newStats);
-    setLastResult(effect);
+    setLastResult({ ...effect, stamina: staminaDelta, sanity: sanityDelta, risk: riskDelta });
     setGameState(GameState.RESULT);
     saveGame(newStats);
   };

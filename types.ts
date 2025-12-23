@@ -109,6 +109,7 @@ export interface Buff {
         staminaCostMod?: number; 
         sanityCostMod?: number;
         luckMod?: number;
+        risk?: number; // Added to support risk reduction buffs like Stability
     };
     isNegative: boolean;
 }
