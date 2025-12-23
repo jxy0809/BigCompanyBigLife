@@ -13,7 +13,7 @@ import ShopView from './components/ShopView';
 import HistoryView from './components/HistoryView';
 import WeekendView from './components/WeekendView';
 import SceneHeader from './components/SceneHeader';
-import { Building2, Award, QrCode } from 'lucide-react';
+import { Building2, Award, QrCode, Sun, RotateCcw, Play } from 'lucide-react';
 
 const SAVE_KEY = 'industry_survival_v1';
 const META_KEY = 'industry_meta_v1';
@@ -94,7 +94,7 @@ const App: React.FC = () => {
           const updatedUnlocked = [...meta.unlockedIndustries, newUnlock];
           saveMeta({ ...meta, unlockedIndustries: updatedUnlocked });
           // Optional: Notify user
-          alert(`解锁新行业: ${INDUSTRIES[newUnlock].name}!`);
+          // alert(`解锁新行业: ${INDUSTRIES[newUnlock].name}!`);
       }
   };
 
@@ -105,6 +105,10 @@ const App: React.FC = () => {
     } else {
       setGameState(GameState.CREATION);
     }
+  };
+
+  const startNewGame = () => {
+    setGameState(GameState.CREATION);
   };
 
   const finalizeCreation = (attributes: Attributes, industry: IndustryType, spentLegacyPoints: number) => {
@@ -145,11 +149,12 @@ const App: React.FC = () => {
       return;
     }
 
+    const indConfig = INDUSTRIES[currentStats.industry];
+    // Calculate small week. If industry has smallWeek modifier (e.g., Internet), then even weeks are small weeks (work on Sat).
+    const isSmallWeek = indConfig.modifiers.smallWeek && (currentStats.week % 2 === 0);
+
     // Metro Delivery Day Logic (Every 4 weeks)
     if (currentStats.industry === IndustryType.METRO && currentStats.week % 4 === 0) {
-        const isDeliverySuccess = currentStats.attributes.tech > 35;
-        const isDeliveryFail = currentStats.attributes.tech < 20;
-        
         const deliveryEvent: GameEvent = {
             id: 'metro_delivery',
             category: EventCategory.DELIVERY_DAY,
@@ -175,7 +180,7 @@ const App: React.FC = () => {
         };
         
         setCurrentEvent(deliveryEvent);
-        setStats({ ...currentStats, location: Location.FACTORY_FLOOR });
+        setStats({ ...currentStats, location: Location.FACTORY_FLOOR, isSmallWeek });
         setGameState(GameState.WEEK_START);
         setTimeout(() => setGameState(GameState.EVENT), 1200);
         return;
@@ -183,11 +188,19 @@ const App: React.FC = () => {
 
     const pool = getEventsForIndustry(currentStats.industry);
     const selectedEvent = pool[Math.floor(Math.random() * pool.length)];
-    const updatedStats = { ...currentStats, location: selectedEvent.location };
+    const updatedStats = { ...currentStats, location: selectedEvent.location, isSmallWeek };
     setCurrentEvent(selectedEvent);
     setStats(updatedStats);
     setGameState(GameState.WEEK_START);
-    setTimeout(() => setGameState(GameState.EVENT), 1200); 
+    setTimeout(() => setGameState(GameState.EVENT), 1500); // Increased duration for animation
+  };
+
+  const handleRetire = () => {
+    setGameState(GameState.RETIRING);
+    setTimeout(() => {
+        // Pass explicit ending to avoid closure staleness issues with gameState
+        handleGameEnd(stats, true, "提前退休"); 
+    }, 3000);
   };
 
   const handleOptionSelect = (optionIndex: number, e: React.MouseEvent) => {
@@ -255,14 +268,16 @@ const App: React.FC = () => {
       startWeek(currentStats);
   };
 
-  const handleGameEnd = (endStats: GameStats, isVictory: boolean) => {
+  const handleGameEnd = (endStats: GameStats, isVictory: boolean, specificEnding?: string) => {
+      const endingText = specificEnding || (isVictory ? "光荣退休" : "被迫离职");
+
       const record: GameRecord = {
           date: new Date().toLocaleDateString(),
           industry: endStats.industry,
           week: endStats.week,
           money: endStats.money,
           level: endStats.level,
-          ending: isVictory ? "光荣退休" : "被迫离职",
+          ending: endingText,
           victory: isVictory
       };
 
@@ -295,6 +310,8 @@ const App: React.FC = () => {
   const indConfig = INDUSTRIES[stats.industry];
 
   if (gameState === GameState.START) {
+    const hasActiveRun = stats.week > 1;
+
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-white p-8 overflow-hidden">
         <div className="w-full max-w-sm flex flex-col items-center">
@@ -306,16 +323,43 @@ const App: React.FC = () => {
             <div className="bg-yellow-50 text-yellow-800 px-4 py-2 rounded-lg text-xs font-bold mb-8">
                 累计生涯点数: {meta.totalCareerPoints}
             </div>
-            <button onClick={goToCreation} className="w-full bg-black text-white font-medium py-3.5 px-6 rounded-xl text-base shadow-sm active:scale-[0.98]">
-                {stats.week > 1 ? `继续 (Week ${stats.week})` : '新人生'}
-            </button>
-            <button onClick={() => { setActiveTab(TabView.HISTORY); setGameState(GameState.WEEK_START); }} className="mt-4 text-sm text-[#3370ff] font-medium">查看往事回顾</button>
+            
+            {hasActiveRun ? (
+                <div className="w-full space-y-3">
+                     <button onClick={goToCreation} className="w-full bg-black text-white font-medium py-3.5 px-6 rounded-xl text-base shadow-sm active:scale-[0.98] flex items-center justify-center">
+                        <Play size={18} className="mr-2 fill-current" /> 继续 (Week {stats.week})
+                    </button>
+                    <button onClick={startNewGame} className="w-full bg-white border border-[#dee0e3] text-[#1f2329] font-medium py-3.5 px-6 rounded-xl text-base shadow-sm active:scale-[0.98] flex items-center justify-center hover:bg-gray-50 transition-colors">
+                        <RotateCcw size={18} className="mr-2" /> 重新开始
+                    </button>
+                </div>
+            ) : (
+                <button onClick={goToCreation} className="w-full bg-black text-white font-medium py-3.5 px-6 rounded-xl text-base shadow-sm active:scale-[0.98]">
+                    新人生
+                </button>
+            )}
+
+            <button onClick={() => { setActiveTab(TabView.HISTORY); setGameState(GameState.WEEK_START); }} className="mt-8 text-sm text-[#3370ff] font-medium hover:underline">查看往事回顾</button>
         </div>
       </div>
     );
   }
 
   if (gameState === GameState.CREATION) return <CharacterCreation onComplete={finalizeCreation} availableLegacyPoints={Math.floor(meta.totalCareerPoints / 10)} unlockedIndustries={meta.unlockedIndustries} />;
+
+  if (gameState === GameState.RETIRING) {
+      return (
+          <div className="h-screen flex flex-col items-center justify-center animate-sunset text-white p-6 overflow-hidden">
+              <Sun size={80} className="mb-6 animate-pulse text-yellow-100" />
+              <h2 className="text-3xl font-bold mb-4">正在办理退休手续...</h2>
+              <p className="text-white/80 text-center max-w-xs">
+                  再见了，打卡机。<br/>
+                  再见了，KPI。<br/>
+                  世界那么大，我想去看看。
+              </p>
+          </div>
+      );
+  }
 
   if (gameState === GameState.GAME_OVER || gameState === GameState.VICTORY) {
       // Industrial Leader Ending for Metro
@@ -346,8 +390,9 @@ const App: React.FC = () => {
       return (
         <div className="h-screen flex flex-col items-center justify-center bg-[#444] p-6 text-center grayscale">
             <div className="bg-white rounded-2xl p-6 shadow-sm max-w-sm w-full grayscale-0">
-                <h2 className="text-2xl font-bold mb-4">{gameState === GameState.VICTORY ? "大功告成" : "搬砖失败"}</h2>
-                <button onClick={() => setGameState(GameState.START)} className="w-full bg-black text-white py-3 rounded-xl">重来</button>
+                <h2 className="text-2xl font-bold mb-4">{gameState === GameState.VICTORY ? "退休快乐" : "搬砖失败"}</h2>
+                <p className="text-gray-500 mb-6">{gameState === GameState.VICTORY ? "你成功摆脱了内卷，开启了第二人生。" : "很遗憾，你没能撑到最后。"}</p>
+                <button onClick={() => setGameState(GameState.START)} className="w-full bg-black text-white py-3 rounded-xl">返回主界面</button>
             </div>
         </div>
       );
@@ -359,17 +404,24 @@ const App: React.FC = () => {
       <div className="flex-1 overflow-y-auto no-scrollbar pb-24" ref={scrollRef}>
         {activeTab === TabView.WORK && (
             <>
-                {gameState === GameState.WEEK_START && <div className="h-full flex items-center justify-center font-bold">Week {stats.week}</div>}
+                {gameState === GameState.WEEK_START && (
+                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black text-white animate-curtain-drop">
+                        <div className="animate-scale-up text-center">
+                            <h1 className="text-6xl font-black tracking-tighter mb-2 italic">WEEK {stats.week}</h1>
+                            {stats.isSmallWeek && <div className="text-red-500 font-bold tracking-widest bg-red-900/30 px-3 py-1 rounded inline-block">小周 / SMALL WEEK</div>}
+                        </div>
+                    </div>
+                )}
                 {(gameState === GameState.EVENT || gameState === GameState.RESULT) && currentEvent && (
                     <>
                         <SceneHeader location={stats.location} industry={stats.industry} />
-                        {gameState === GameState.EVENT ? <EventCard event={currentEvent} stats={stats} onOptionSelect={handleOptionSelect} /> : <ResultView result={lastResult!} onNext={handleAfterWork} />}
+                        {gameState === GameState.EVENT ? <EventCard event={currentEvent} stats={stats} onOptionSelect={handleOptionSelect} /> : <ResultView result={lastResult!} onNext={handleAfterWork} onRetire={handleRetire} />}
                     </>
                 )}
                 {gameState === GameState.WEEKEND && <WeekendView onSelect={handleWeekendChoice} isSmallWeek={stats.isSmallWeek} canOutsource={stats.attributes.tech > 15}/>}
             </>
         )}
-        {activeTab === TabView.RESUME && <ResumeView stats={stats} />}
+        {activeTab === TabView.RESUME && <ResumeView stats={stats} onRetire={handleRetire} />}
         {activeTab === TabView.SHOP && <ShopView stats={stats} onBuy={buyItem} />}
         {activeTab === TabView.HISTORY && <HistoryView meta={meta} onBack={() => setActiveTab(TabView.WORK)} />}
       </div>

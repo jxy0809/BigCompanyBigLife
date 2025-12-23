@@ -1,10 +1,12 @@
+
 import React from 'react';
 import { GameStats, LEVELS, IndustryType } from '../types';
 import { INDUSTRIES } from '../constants';
-import { Shield, Smile, Cpu, Heart, Sparkles, User, Medal, Users, Zap } from 'lucide-react';
+import { Shield, Smile, Cpu, Heart, Sparkles, User, Medal, Users, Zap, LogOut } from 'lucide-react';
 
 interface Props {
   stats: GameStats;
+  onRetire?: () => void;
 }
 
 const RadarChart: React.FC<{ attributes: GameStats['attributes'], color: string }> = ({ attributes, color }) => {
@@ -83,7 +85,7 @@ const RelationBar: React.FC<{ label: string; role: string; value: number; color:
     </div>
 );
 
-const ResumeView: React.FC<Props> = ({ stats }) => {
+const ResumeView: React.FC<Props> = ({ stats, onRetire }) => {
   const indConfig = INDUSTRIES[stats.industry];
   const currentLevel = LEVELS.find(l => l.id === stats.level) || LEVELS[0];
   const themeColor = indConfig.theme.primaryColor;
@@ -180,6 +182,18 @@ const ResumeView: React.FC<Props> = ({ stats }) => {
                <span className="text-sm text-[#646a73]">被优化风险</span>
                <span className={`text-sm font-bold ${stats.risk > 50 ? 'text-red-500' : 'text-green-500'}`}>{stats.risk}%</span>
            </div>
+       </div>
+
+       {/* Retire Button */}
+       <div className="pt-4">
+           <button 
+                onClick={onRetire}
+                className="w-full bg-gray-100 text-gray-500 font-bold py-4 rounded-xl hover:bg-red-50 hover:text-red-500 transition-colors flex items-center justify-center space-x-2"
+           >
+               <LogOut size={18} />
+               <span>申请提前退休</span>
+           </button>
+           <p className="text-center text-[10px] text-gray-400 mt-2">注：累了随时可以走，生活不只有工作。</p>
        </div>
     </div>
   );

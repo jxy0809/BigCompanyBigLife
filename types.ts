@@ -189,7 +189,8 @@ export enum GameState {
   RESULT = 'RESULT',
   WEEKEND = 'WEEKEND',       
   GAME_OVER = 'GAME_OVER',
-  VICTORY = 'VICTORY'
+  VICTORY = 'VICTORY',
+  RETIRING = 'RETIRING' // New State
 }
 
 export enum TabView {

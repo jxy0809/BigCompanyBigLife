@@ -48,6 +48,38 @@
         animation: shake 0.5s;
         animation-iteration-count: infinite;
       }
+
+      /* Week Transition */
+      @keyframes curtain-drop {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(0); }
+      }
+      .animate-curtain-drop {
+        animation: curtain-drop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      @keyframes scale-up-text {
+        0% { transform: scale(0.5); opacity: 0; }
+        50% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      .animate-scale-up {
+        animation: scale-up-text 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        animation-delay: 0.2s;
+        opacity: 0;
+      }
+
+      /* Retirement */
+      @keyframes sunset-glow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      .animate-sunset {
+        background: linear-gradient(270deg, #ff7e5f, #feb47b);
+        background-size: 400% 400%;
+        animation: sunset-glow 3s ease infinite;
+      }
     </style>
   <script type="importmap">
 {
