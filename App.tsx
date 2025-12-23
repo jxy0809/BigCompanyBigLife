@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { BLANK_STATS, CONFIG, SHOP_ITEMS, INDUSTRIES, getEventsForIndustry, UNIVERSAL_CHAINED_EVENTS } from './constants';
+import { BLANK_STATS, CONFIG, SHOP_ITEMS, INDUSTRIES, getEventsForIndustry, BUFFS } from './constants';
 import { GameStats, GameState, GameEvent, OptionEffect, LEVELS, Attributes, TabView, Location, ShopItem, EventCategory, MetaData, IndustryType, EventRarity, GameRecord } from './types';
 import StatBar from './components/StatBar';
 import EventCard from './components/EventCard';
@@ -13,14 +13,20 @@ import ShopView from './components/ShopView';
 import HistoryView from './components/HistoryView';
 import WeekendView from './components/WeekendView';
 import SceneHeader from './components/SceneHeader';
-import { Building2, UserCheck, AlertTriangle, Trophy, RotateCcw, FileBarChart, Bell } from 'lucide-react';
+import { Building2, Award, QrCode } from 'lucide-react';
 
 const SAVE_KEY = 'industry_survival_v1';
 const META_KEY = 'industry_meta_v1';
 
 const App: React.FC = () => {
   const [stats, setStats] = useState<GameStats>(BLANK_STATS);
-  const [meta, setMeta] = useState<MetaData>({ totalCareerPoints: 0, unlockedBadges: [], highScoreWeeks: 0, gameHistory: [] });
+  const [meta, setMeta] = useState<MetaData>({ 
+      totalCareerPoints: 0, 
+      unlockedBadges: [], 
+      highScoreWeeks: 0, 
+      gameHistory: [],
+      unlockedIndustries: [IndustryType.INTERNET] 
+  });
   const [gameState, setGameState] = useState<GameState>(GameState.START);
   const [activeTab, setActiveTab] = useState<TabView>(TabView.WORK);
   const [currentEvent, setCurrentEvent] = useState<GameEvent | null>(null);
@@ -35,7 +41,12 @@ const App: React.FC = () => {
     const savedMeta = localStorage.getItem(META_KEY);
     
     if (savedMeta) {
-        try { setMeta(JSON.parse(savedMeta)); } catch(e) {}
+        try { 
+            const m = JSON.parse(savedMeta);
+            // Ensure unlockedIndustries exists for legacy saves
+            if (!m.unlockedIndustries) m.unlockedIndustries = [IndustryType.INTERNET];
+            setMeta(m); 
+        } catch(e) {}
     }
 
     if (saved) {
@@ -58,7 +69,35 @@ const App: React.FC = () => {
       setMeta(newMeta);
   }
 
-  // Add missing goToCreation function to handle game start/resume logic.
+  // --- Unlock Logic ---
+  const checkIndustryUnlock = (currentStats: GameStats) => {
+      const survivedWeeks = currentStats.week;
+      const currentIndustry = currentStats.industry;
+      const alreadyUnlocked = new Set(meta.unlockedIndustries);
+      let newUnlock: IndustryType | null = null;
+
+      if (survivedWeeks >= 10) {
+          if (currentIndustry === IndustryType.INTERNET && !alreadyUnlocked.has(IndustryType.REAL_ESTATE)) {
+              newUnlock = IndustryType.REAL_ESTATE;
+          } else if (currentIndustry === IndustryType.REAL_ESTATE && !alreadyUnlocked.has(IndustryType.PHARMA)) {
+              newUnlock = IndustryType.PHARMA;
+          } else if (currentIndustry === IndustryType.PHARMA && !alreadyUnlocked.has(IndustryType.POLICE)) {
+              newUnlock = IndustryType.POLICE;
+          } else if (currentIndustry === IndustryType.POLICE && !alreadyUnlocked.has(IndustryType.DESIGN)) {
+              newUnlock = IndustryType.DESIGN;
+          } else if (currentIndustry === IndustryType.DESIGN && !alreadyUnlocked.has(IndustryType.METRO)) {
+              newUnlock = IndustryType.METRO;
+          }
+      }
+
+      if (newUnlock) {
+          const updatedUnlocked = [...meta.unlockedIndustries, newUnlock];
+          saveMeta({ ...meta, unlockedIndustries: updatedUnlocked });
+          // Optional: Notify user
+          alert(`解锁新行业: ${INDUSTRIES[newUnlock].name}!`);
+      }
+  };
+
   const goToCreation = () => {
     if (stats.week > 1) {
       setGameState(GameState.WEEK_START);
@@ -84,6 +123,12 @@ const App: React.FC = () => {
       money: initialMoney, salary: initialSalary, level: initialLevel,
       expenses: CONFIG.BASE_EXPENSE, reviveUsed: false, legacyPointsUsed: spentLegacyPoints
     };
+
+    // Metro Entry Oath
+    if (industry === IndustryType.METRO) {
+        startStats.activeBuffs.push(BUFFS.STABILITY(999)); // Permanent stability
+        alert("【入职宣誓】\n我志愿献身大国重器，严守工艺纪律，确保行车安全。\n获得永久Buff: 铁饭碗 (心智消耗-20%)");
+    }
     
     setStats(startStats);
     setGameState(GameState.WEEK_START);
@@ -92,10 +137,50 @@ const App: React.FC = () => {
   };
 
   const startWeek = (currentStats: GameStats) => {
+    // Check for unlocks
+    checkIndustryUnlock(currentStats);
+
     if (currentStats.week > CONFIG.MAX_WEEKS) {
       handleGameEnd(currentStats, true);
       return;
     }
+
+    // Metro Delivery Day Logic (Every 4 weeks)
+    if (currentStats.industry === IndustryType.METRO && currentStats.week % 4 === 0) {
+        const isDeliverySuccess = currentStats.attributes.tech > 35;
+        const isDeliveryFail = currentStats.attributes.tech < 20;
+        
+        const deliveryEvent: GameEvent = {
+            id: 'metro_delivery',
+            category: EventCategory.DELIVERY_DAY,
+            rarity: EventRarity.EPIC,
+            location: Location.FACTORY_FLOOR,
+            industry: IndustryType.METRO,
+            title: '关键节点交付日',
+            description: `本月是第 ${currentStats.week} 周的关键交付节点。全集团都在盯着这次交付。`,
+            options: [
+                { 
+                    label: '提交验收', 
+                    effect: (s) => {
+                        if (s.attributes.tech > 35) {
+                            return { money: 10000, exp: 50, message: '技术指标完美达标！获得节点专项奖金 10,000 元！' };
+                        } else if (s.attributes.tech < 20) {
+                            return { money: -5000, level: -1, message: '关键指标严重偏差！扣除绩效 5,000 元并通报批评。' };
+                        } else {
+                            return { message: '验收通过，无功无过。' };
+                        }
+                    } 
+                }
+            ]
+        };
+        
+        setCurrentEvent(deliveryEvent);
+        setStats({ ...currentStats, location: Location.FACTORY_FLOOR });
+        setGameState(GameState.WEEK_START);
+        setTimeout(() => setGameState(GameState.EVENT), 1200);
+        return;
+    }
+
     const pool = getEventsForIndustry(currentStats.industry);
     const selectedEvent = pool[Math.floor(Math.random() * pool.length)];
     const updatedStats = { ...currentStats, location: selectedEvent.location };
@@ -115,8 +200,28 @@ const App: React.FC = () => {
       sanity: Math.min(stats.maxSanity, stats.sanity + (effect.sanity || 0)),
       money: stats.money + (effect.money || 0),
       exp: stats.exp + (effect.exp || 0),
-      risk: Math.max(0, stats.risk + (effect.risk || 0))
+      risk: Math.max(0, stats.risk + (effect.risk || 0)),
+      level: Math.max(1, stats.level + (effect.level || 0)) // Prevent level 0
     };
+    
+    // Apply buff if any
+    if (effect.addBuff) {
+        newStats.activeBuffs = [...newStats.activeBuffs, effect.addBuff];
+    }
+    
+    // Process Attributes updates
+    if (effect.attributes) {
+        newStats.attributes = { ...newStats.attributes, ...effect.attributes };
+    }
+    // Process Relationship updates
+    if (effect.relationships) {
+        newStats.relationships = {
+            boss: (newStats.relationships.boss || 30) + (effect.relationships.boss || 0),
+            colleague: (newStats.relationships.colleague || 30) + (effect.relationships.colleague || 0),
+            hr: (newStats.relationships.hr || 30) + (effect.relationships.hr || 0)
+        }
+    }
+
     setStats(newStats);
     setLastResult(effect);
     setGameState(GameState.RESULT);
@@ -130,6 +235,10 @@ const App: React.FC = () => {
     } else {
       finalStats.sanity += 10;
     }
+    
+    // Buff expiry check
+    finalStats.activeBuffs = finalStats.activeBuffs.map(b => ({...b, duration: b.duration - 1})).filter(b => b.duration > 0);
+
     if (finalStats.stamina <= 0 || finalStats.sanity <= 0) {
         handleGameEnd(finalStats, false); return;
     }
@@ -165,7 +274,8 @@ const App: React.FC = () => {
           ...meta,
           gameHistory: newHistory,
           totalCareerPoints: newTotal,
-          highScoreWeeks: newHigh
+          highScoreWeeks: newHigh,
+          unlockedIndustries: meta.unlockedIndustries // Ensure this persists
       });
 
       setStats(endStats);
@@ -205,9 +315,34 @@ const App: React.FC = () => {
     );
   }
 
-  if (gameState === GameState.CREATION) return <CharacterCreation onComplete={finalizeCreation} availableLegacyPoints={Math.floor(meta.totalCareerPoints / 10)} />;
+  if (gameState === GameState.CREATION) return <CharacterCreation onComplete={finalizeCreation} availableLegacyPoints={Math.floor(meta.totalCareerPoints / 10)} unlockedIndustries={meta.unlockedIndustries} />;
 
   if (gameState === GameState.GAME_OVER || gameState === GameState.VICTORY) {
+      // Industrial Leader Ending for Metro
+      if (gameState === GameState.VICTORY && stats.industry === IndustryType.METRO) {
+          return (
+            <div className="h-screen flex flex-col items-center justify-center bg-[#1e293b] p-6 text-center text-white relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1474487548417-781cb714c2f0?auto=format&fit=crop&q=80')] opacity-10 bg-cover bg-center"></div>
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-2xl max-w-sm w-full z-10">
+                    <Award size={64} className="mx-auto mb-6 text-yellow-400" />
+                    <h2 className="text-3xl font-black mb-2 tracking-widest">大国工匠</h2>
+                    <p className="text-sm text-gray-300 mb-6 uppercase tracking-wider">Industrial Leader</p>
+                    <div className="w-full h-px bg-white/20 mb-6"></div>
+                    <div className="text-left space-y-2 mb-8 text-sm">
+                        <div className="flex justify-between"><span>工龄</span><span className="font-bold">52 周</span></div>
+                        <div className="flex justify-between"><span>最终职级</span><span className="font-bold">总工程师</span></div>
+                        <div className="flex justify-between"><span>存款</span><span className="font-bold">{stats.money} 元</span></div>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl mb-6">
+                        <QrCode className="mx-auto text-black" size={80} />
+                        <p className="text-[10px] text-black font-bold mt-2">扫码见证荣耀</p>
+                    </div>
+                    <button onClick={() => setGameState(GameState.START)} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded-xl transition-colors">开启新征程</button>
+                </div>
+            </div>
+          )
+      }
+
       return (
         <div className="h-screen flex flex-col items-center justify-center bg-[#444] p-6 text-center grayscale">
             <div className="bg-white rounded-2xl p-6 shadow-sm max-w-sm w-full grayscale-0">

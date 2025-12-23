@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Attributes, GameStats, LEVELS, IndustryType } from '../types';
 import { INDUSTRIES } from '../constants';
@@ -6,11 +7,10 @@ import { UserPlus, Minus, Plus, Shield, Smile, Cpu, Heart, Sparkles, ChevronRigh
 interface Props {
   onComplete: (attributes: Attributes, industry: IndustryType, spentPoints: number) => void;
   availableLegacyPoints: number;
+  unlockedIndustries: IndustryType[];
 }
 
-const LOCKED_INDUSTRIES = [IndustryType.REAL_ESTATE, IndustryType.PHARMA, IndustryType.POLICE];
-
-const CharacterCreation: React.FC<Props> = ({ onComplete, availableLegacyPoints }) => {
+const CharacterCreation: React.FC<Props> = ({ onComplete, availableLegacyPoints, unlockedIndustries = [] }) => {
   const [step, setStep] = useState<'INDUSTRY' | 'ATTR'>('INDUSTRY');
   const [selectedIndustry, setSelectedIndustry] = useState<IndustryType>(IndustryType.INTERNET);
   const [points, setPoints] = useState(20);
@@ -22,6 +22,7 @@ const CharacterCreation: React.FC<Props> = ({ onComplete, availableLegacyPoints 
     luck: 1
   });
   const [showSummary, setShowSummary] = useState(false);
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
   // Auto-spend legacy points into pool
   useEffect(() => {
@@ -52,44 +53,55 @@ const CharacterCreation: React.FC<Props> = ({ onComplete, availableLegacyPoints 
              
              <div className="space-y-4 pb-20">
                  {Object.values(INDUSTRIES).map((ind) => {
-                     const isLocked = LOCKED_INDUSTRIES.includes(ind.type);
+                     const isUnlocked = unlockedIndustries.includes(ind.type);
                      const isSelected = selectedIndustry === ind.type;
                      
                      return (
-                         <button
-                            key={ind.type}
-                            onClick={() => !isLocked && setSelectedIndustry(ind.type)}
-                            disabled={isLocked}
-                            className={`w-full text-left p-4 rounded-xl border-2 transition-all relative ${
-                                isSelected
-                                ? `border-[${ind.theme.primaryColor}] bg-gray-50 ring-1 ring-[${ind.theme.primaryColor}]` 
-                                : 'border-[#dee0e3] bg-white'
-                            } ${isLocked ? 'opacity-50 grayscale cursor-not-allowed bg-gray-50' : ''}`}
-                            style={{ borderColor: isSelected ? ind.theme.primaryColor : undefined }}
-                         >
-                            {isLocked && (
-                                <div className="absolute top-3 right-3 bg-gray-200 text-gray-500 text-[10px] px-2 py-1 rounded-full flex items-center font-medium z-10">
-                                    <Lock size={10} className="mr-1" /> 暂未开放
+                         <div key={ind.type} className="relative">
+                            <button
+                                onClick={() => {
+                                    if(isUnlocked) setSelectedIndustry(ind.type);
+                                    else setShowTooltip(showTooltip === ind.type ? null : ind.type);
+                                }}
+                                className={`w-full text-left p-4 rounded-xl border-2 transition-all relative ${
+                                    isSelected
+                                    ? `border-[${ind.theme.primaryColor}] bg-gray-50 ring-1 ring-[${ind.theme.primaryColor}]` 
+                                    : 'border-[#dee0e3] bg-white'
+                                } ${!isUnlocked ? 'opacity-60 grayscale cursor-not-allowed bg-gray-50' : ''}`}
+                                style={{ borderColor: isSelected ? ind.theme.primaryColor : undefined }}
+                            >
+                                {!isUnlocked && (
+                                    <div className="absolute top-3 right-3 bg-gray-200 text-gray-500 text-[10px] px-2 py-1 rounded-full flex items-center font-medium z-10">
+                                        <Lock size={10} className="mr-1" /> 锁定
+                                    </div>
+                                )}
+
+                                <div className="flex items-center mb-2">
+                                    <div className="p-2 rounded-lg mr-3 text-white" style={{ backgroundColor: ind.theme.primaryColor }}>
+                                        <Briefcase size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-[#1f2329]">{ind.name}</h3>
+                                        <span className="text-[10px] text-[#646a73]">{ind.description}</span>
+                                    </div>
+                                </div>
+                                <div className="text-xs bg-gray-100 p-2 rounded text-[#646a73] leading-relaxed">
+                                    {ind.type === IndustryType.METRO && '节点交付日 | 铁饭碗BUFF | 大国工匠结局'}
+                                    {ind.type === IndustryType.INTERNET && '周薪+20% | 强制大小周 | 初始心智-10'}
+                                    {ind.type === IndustryType.REAL_ESTATE && '情商双倍加成 | 经济危机风险 | 低底薪'}
+                                    {ind.type === IndustryType.PHARMA && '技术门槛高(Tech<10工资减半) | 严谨稳定'}
+                                    {ind.type === IndustryType.POLICE && '体力上限+50 | 心智自动流失 | 连轴转'}
+                                    {ind.type === IndustryType.DESIGN && '心智上限减半 | 灵气爆发收益 | 甲方折磨'}
+                                </div>
+                            </button>
+                            {/* Tooltip for Unlock Requirements */}
+                            {!isUnlocked && showTooltip === ind.type && (
+                                <div className="absolute z-20 top-full left-0 right-0 mt-2 p-3 bg-black text-white text-xs rounded-lg shadow-xl animate-fade-in-up">
+                                    <div className="font-bold mb-1 text-yellow-400 flex items-center"><Lock size={12} className="mr-1"/> 解锁条件</div>
+                                    {ind.unlockReq}
                                 </div>
                             )}
-
-                            <div className="flex items-center mb-2">
-                                 <div className="p-2 rounded-lg mr-3 text-white" style={{ backgroundColor: ind.theme.primaryColor }}>
-                                    <Briefcase size={20} />
-                                 </div>
-                                 <div>
-                                     <h3 className="font-bold text-[#1f2329]">{ind.name}</h3>
-                                     <span className="text-[10px] text-[#646a73]">{ind.description}</span>
-                                 </div>
-                            </div>
-                            <div className="text-xs bg-gray-100 p-2 rounded text-[#646a73] leading-relaxed">
-                                {ind.type === IndustryType.INTERNET && '周薪+20% | 强制大小周 | 初始心智-10'}
-                                {ind.type === IndustryType.REAL_ESTATE && '情商双倍加成 | 经济危机风险 | 低底薪'}
-                                {ind.type === IndustryType.PHARMA && '技术门槛高(Tech<10工资减半) | 严谨稳定'}
-                                {ind.type === IndustryType.POLICE && '体力上限+50 | 心智自动流失 | 连轴转'}
-                                {ind.type === IndustryType.DESIGN && '心智上限减半 | 灵气爆发收益 | 甲方折磨'}
-                            </div>
-                         </button>
+                         </div>
                      );
                  })}
              </div>

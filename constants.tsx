@@ -41,6 +41,7 @@ export const BUFFS: Record<string, (duration: number) => Buff> = {
     INSOMNIA: (d) => ({ id: 'insomnia', name: '神经衰弱', description: '夜不能寐', duration: d, isNegative: true, effect: { staminaCostMod: 1.3 } }),
     INSPIRED: (d) => ({ id: 'inspired', name: '灵感爆发', description: '下笔如有神', duration: d, isNegative: false, effect: { luckMod: 10 } }),
     NINE_NINE_SIX: (d) => ({ id: '996', name: '996福报', description: '体力消耗大幅增加', duration: d, isNegative: true, effect: { staminaCostMod: 1.3 } }),
+    STABILITY: (d) => ({ id: 'stability', name: '铁饭碗', description: '心智消耗降低，工作稳定', duration: d, isNegative: false, effect: { sanityCostMod: 0.8, risk: -50 } }),
 };
 
 // --- INDUSTRIES ---
@@ -49,6 +50,7 @@ export const INDUSTRIES: Record<IndustryType, IndustryConfig> = {
     type: IndustryType.INTERNET,
     name: '互联网大厂',
     description: '高薪、期权、福报。你是一颗高速旋转的螺丝钉。',
+    unlockReq: '默认解锁',
     theme: { primaryColor: '#3370ff', secondaryColor: '#e1eaff', bgColor: '#0f172a', textColor: '#1f2329' },
     text: { currency: 'k', progress: '迭代', overtime: '上线', bonus: '期权', fired: '毕业', levelName: 'P' },
     npcs: {
@@ -72,6 +74,7 @@ export const INDUSTRIES: Record<IndustryType, IndustryConfig> = {
     type: IndustryType.REAL_ESTATE,
     name: '地产巨头',
     description: '高周转、高杠杆。开单吃三年，不开单吃土。',
+    unlockReq: '在【互联网】存活 10 周解锁',
     theme: { primaryColor: '#b45309', secondaryColor: '#fef3c7', bgColor: '#451a03', textColor: '#451a03' },
     text: { currency: '万', progress: '去化率', overtime: '开盘', bonus: '佣金', fired: '末位淘汰', levelName: 'M' },
     npcs: {
@@ -95,6 +98,7 @@ export const INDUSTRIES: Record<IndustryType, IndustryConfig> = {
     type: IndustryType.PHARMA,
     name: '生物医药',
     description: '严谨、合规、长周期。任何一个数据错误都是致命的。',
+    unlockReq: '在【地产巨头】存活 10 周解锁',
     theme: { primaryColor: '#0ea5e9', secondaryColor: '#e0f2fe', bgColor: '#f8fafc', textColor: '#0c4a6e' },
     text: { currency: 'k', progress: '临床进度', overtime: '实验', bonus: '研发奖', fired: '合规劝退', levelName: 'T' },
     npcs: {
@@ -118,6 +122,7 @@ export const INDUSTRIES: Record<IndustryType, IndustryConfig> = {
     type: IndustryType.POLICE,
     name: '基层警务',
     description: '责任、奉献、连轴转。为人民服务，除了发量。',
+    unlockReq: '在【生物医药】存活 10 周解锁',
     theme: { primaryColor: '#1e3a8a', secondaryColor: '#dbeafe', bgColor: '#172554', textColor: '#1e3a8a' },
     text: { currency: '元', progress: '结案率', overtime: '出警', bonus: '津贴', fired: '停职', levelName: '衔' },
     npcs: {
@@ -141,6 +146,7 @@ export const INDUSTRIES: Record<IndustryType, IndustryConfig> = {
     type: IndustryType.DESIGN,
     name: '广告设计',
     description: '五彩斑斓的黑。你的审美永远是错的，甲方永远是对的。',
+    unlockReq: '在【基层警务】存活 10 周解锁',
     theme: { primaryColor: '#9333ea', secondaryColor: '#f3e8ff', bgColor: '#581c87', textColor: '#581c87' },
     text: { currency: 'k', progress: '定稿率', overtime: '改稿', bonus: '项目费', fired: '拉黑', levelName: 'L' },
     npcs: {
@@ -158,6 +164,30 @@ export const INDUSTRIES: Record<IndustryType, IndustryConfig> = {
       techSalaryGate: false,
       weeklySanityDrain: 0,
       luckBonus: true 
+    }
+  },
+  [IndustryType.METRO]: {
+    type: IndustryType.METRO,
+    name: '地铁车辆垄断',
+    description: '大国重器，绝对垄断。按部就班，节点交付，但也暗流涌动。',
+    unlockReq: '在【广告设计】存活 10 周解锁',
+    theme: { primaryColor: '#475569', secondaryColor: '#e2e8f0', bgColor: '#0f172a', textColor: '#1e293b' },
+    text: { currency: '元', progress: '交付率', overtime: '保供', bonus: '节点奖', fired: '调岗', levelName: '工' },
+    npcs: {
+      boss: { id: 'm_boss', name: '赵总工', role: '总工程师', desc: '严谨刻板，不容半点差错' },
+      colleague: { id: 'm_col', name: '车间主任', role: '生产调度', desc: '天天催物料，嗓门极大' },
+      hr: { id: 'm_hr', name: '纪委老李', role: '督察', desc: '盯着合规与作风' }
+    },
+    modifiers: {
+      salaryMultiplier: 1.0, // Stable base
+      initialSanityPenalty: 0,
+      staminaBonus: 20,
+      maxSanityCap: 120, // High cap but drains if things go wrong
+      smallWeek: false,
+      eqSalaryScaling: false,
+      techSalaryGate: false,
+      weeklySanityDrain: 0,
+      luckBonus: false
     }
   }
 };
@@ -223,6 +253,19 @@ const DESIGN_EVENTS: GameEvent[] = [
     { id: 'd_1', category: EventCategory.CRISIS, rarity: EventRarity.COMMON, location: Location.MEETING_ROOM, industry: IndustryType.DESIGN, title: '五彩斑斓的黑', description: '甲方爸爸提出离谱需求：要大气，要接地气，要五彩斑斓的黑。', options: [{ label: '专业忽悠 (EQ>25)', requires: s => s.attributes.eq > 25, effect: () => ({ money: 2000, sanity: 10, message: '你用专业术语把甲方绕晕了，定稿。' }) }, { label: '改50遍', effect: () => ({ stamina: -50, sanity: -40, message: '改到最后用了第一版。' }) }] },
 ];
 
+const METRO_EVENTS: GameEvent[] = [
+    { id: 'm_1', category: EventCategory.ROUTINE, rarity: EventRarity.COMMON, location: Location.FACTORY_FLOOR, industry: IndustryType.METRO, title: '新型转向架疲劳测试', description: '新一代转向架正在进行百万次疲劳试验，数据出现微小波动。', options: [{ label: '改进焊接工艺 (Tech>35)', requires: s => s.attributes.tech > 35, effect: () => ({ exp: 100, level: 1, message: '你通过优化焊接热处理工艺，完美解决了隐患。' }) }, { label: '常规测试', effect: () => ({ stamina: -20, exp: 10, message: '按部就班完成了测试报告。' }) }] },
+    { id: 'm_2', category: EventCategory.CRISIS, rarity: EventRarity.RARE, location: Location.BOSS_OFFICE, industry: IndustryType.METRO, title: '出口订单保密审查', description: '海外项目启动，外方人员来访，涉密等级极高。', options: [{ label: '严守规定', effect: () => ({ attributes: { luck: 10 }, relationships: { boss: 20 }, message: '你拒绝了一切非必要访客，赵总工对你刮目相看。' }) }, { label: '随口透露', effect: () => ({ sanity: -20, risk: 50, message: '你由于违反保密协议被纪委约谈。' }) }] },
+    { id: 'm_3', category: EventCategory.CRISIS, rarity: EventRarity.COMMON, location: Location.FACTORY_FLOOR, industry: IndustryType.METRO, title: '总装车间深夜抢产', description: '为了赶节点，总装车间全线铺开，缺人手。', options: [{ label: '连续盯岗 (Health>30)', requires: s => s.attributes.health > 30, effect: () => ({ money: 8000, stamina: -50, message: '你连续48小时没合眼，保住了节点。' }) }, { label: '后勤调度', effect: () => ({ stamina: -10, money: 1000, message: '你帮忙订了夜宵和车辆。' }) }] },
+    { id: 'm_4', category: EventCategory.CHOICE, rarity: EventRarity.RARE, location: Location.MEETING_ROOM, industry: IndustryType.METRO, title: '牵引系统参数被卡脖子', description: '核心牵引逆变器参数调试不顺，外方专家态度傲慢。', options: [{ label: '自研替代 (Tech>40)', requires: s => s.attributes.tech > 40, effect: () => ({ attributes: { tech: 10, luck: 20 }, message: '你通宵啃代码，实现了控制算法的国产化替代！' }) }, { label: '购买服务', effect: () => ({ money: -5000, message: '申请了专项资金请外方解决，心里很憋屈。' }) }] },
+    { id: 'm_5', category: EventCategory.NPC_INTERACTION, rarity: EventRarity.COMMON, location: Location.MEETING_ROOM, industry: IndustryType.METRO, title: '各地铁公司甲方评审会', description: '来自全国的地铁公司专家齐聚，挑刺找茬。', options: [{ label: '完美应对 (EQ>25)', requires: s => s.attributes.eq > 25, effect: () => ({ exp: 50, money: 2000, message: '你不卑不亢，专业回复，赢得了掌声。' }) }, { label: '现场争吵', effect: () => ({ level: -1, sanity: -30, message: '你没忍住脾气，被投诉了。' }) }] },
+    { id: 'm_6', category: EventCategory.CRISIS, rarity: EventRarity.COMMON, location: Location.FACTORY_FLOOR, industry: IndustryType.METRO, title: '操作违章导致停产', description: '一名工人在吊装作业时违章，导致流水线停摆。', options: [{ label: '勇于担责', effect: () => ({ attributes: { eq: 10 }, sanity: -10, message: '你主动承担了管理责任，提交了整改报告。' }) }, { label: '推卸责任', effect: () => ({ relationships: { colleague: -30, boss: -10 }, risk: 20, message: '你把锅甩给了实习生，大家都很鄙视你。' }) }] },
+    { id: 'm_7', category: EventCategory.FATE, rarity: EventRarity.EPIC, location: Location.BOSS_OFFICE, industry: IndustryType.METRO, title: '全国五一劳动奖章', description: '集团有一个推荐名额，竞争激烈。', options: [{ label: '意外获得 (Luck>25)', requires: s => s.attributes.luck > 25, effect: () => ({ money: 10000, level: 1, message: '凭借运气和资历，荣誉落到了你头上！' }) }, { label: '擦肩而过', effect: () => ({ sanity: -5, message: '意料之中，平常心。' }) }] },
+    { id: 'm_8', category: EventCategory.ROUTINE, rarity: EventRarity.COMMON, location: Location.FACTORY_FLOOR, industry: IndustryType.METRO, title: '智能制造生产线改造', description: '车间要上全自动机械臂，需要懂技术的人配合。', options: [{ label: '编写算法 (Tech>30)', requires: s => s.attributes.tech > 30, effect: () => ({ attributes: { tech: 8 }, exp: 40, message: '你参与了核心控制逻辑编写。' }) }, { label: '学习操作', effect: () => ({ attributes: { tech: 2 }, message: '你学会了如何按启动按钮。' }) }] },
+    { id: 'm_9', category: EventCategory.CHOICE, rarity: EventRarity.RARE, location: Location.MEETING_ROOM, industry: IndustryType.METRO, title: '集团内部竞聘副总师', description: '副总工程师岗位空缺，这是一个一步登天的机会。', options: [{ label: '竞聘演讲 (EQ>30)', requires: s => s.attributes.eq > 30, effect: () => ({ salary: 5000, level: 1, message: '你的演讲极具感染力，全票当选！' }) }, { label: '遗憾落选', effect: () => ({ sanity: -20, message: '准备不足，还要继续历练。' }) }] },
+    { id: 'm_10', category: EventCategory.CRISIS, rarity: EventRarity.EPIC, location: Location.FACTORY_FLOOR, industry: IndustryType.METRO, title: '型式试验车碰撞事故', description: '试验线上，车辆由于制动失效即将撞上止挡！', options: [{ label: '冲进现场', effect: () => ({ stamina: -30, exp: 50, message: '你冒死拍下了关键故障代码，为事故分析立下大功。' }) }, { label: '呆若木鸡', effect: () => ({ sanity: -40, attributes: { luck: -10 }, message: '你被吓傻了，留下了心理阴影。' }) }] },
+];
+
 export const getEventsForIndustry = (industry: IndustryType): GameEvent[] => {
     let specific: GameEvent[] = [];
     switch(industry) {
@@ -231,6 +274,7 @@ export const getEventsForIndustry = (industry: IndustryType): GameEvent[] => {
         case IndustryType.POLICE: specific = POLICE_EVENTS; break;
         case IndustryType.PHARMA: specific = PHARMA_EVENTS; break;
         case IndustryType.DESIGN: specific = DESIGN_EVENTS; break;
+        case IndustryType.METRO: specific = METRO_EVENTS; break;
     }
 
     const txt = INDUSTRIES[industry].text;

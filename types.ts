@@ -7,7 +7,8 @@ export enum IndustryType {
   REAL_ESTATE = 'REAL_ESTATE',
   PHARMA = 'PHARMA',
   POLICE = 'POLICE',
-  DESIGN = 'DESIGN'
+  DESIGN = 'DESIGN',
+  METRO = 'METRO'
 }
 
 export interface IndustryTheme {
@@ -37,6 +38,7 @@ export interface IndustryConfig {
   type: IndustryType;
   name: string;
   description: string;
+  unlockReq: string; // Description of how to unlock
   theme: IndustryTheme;
   text: IndustryText;
   npcs: {
@@ -76,7 +78,8 @@ export enum Location {
   MEETING_ROOM = 'MEETING_ROOM',
   BOSS_OFFICE = 'BOSS_OFFICE',
   HOME = 'HOME',
-  HOSPITAL = 'HOSPITAL'
+  HOSPITAL = 'HOSPITAL',
+  FACTORY_FLOOR = 'FACTORY_FLOOR' // New location for Metro
 }
 
 export enum EventCategory {
@@ -86,7 +89,8 @@ export enum EventCategory {
   CRISIS = 'CRISIS',     
   SMALL_WEEK = 'SMALL_WEEK',
   NPC_INTERACTION = 'NPC_INTERACTION',
-  CHAINED = 'CHAINED'
+  CHAINED = 'CHAINED',
+  DELIVERY_DAY = 'DELIVERY_DAY' // New category for Metro
 }
 
 export enum EventRarity {
@@ -236,4 +240,5 @@ export interface MetaData {
     unlockedBadges: string[];
     highScoreWeeks: number;
     gameHistory: GameRecord[];
+    unlockedIndustries: IndustryType[]; // New field
 }
