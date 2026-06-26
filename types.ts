@@ -198,7 +198,8 @@ export enum TabView {
   WORK = 'WORK',
   RESUME = 'RESUME',
   SHOP = 'SHOP',
-  HISTORY = 'HISTORY'
+  HISTORY = 'HISTORY',
+  LEADERBOARD = 'LEADERBOARD'
 }
 
 export const LEVELS = [

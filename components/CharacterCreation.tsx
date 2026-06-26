@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Attributes, GameStats, LEVELS, IndustryType } from '../types';
 import { INDUSTRIES } from '../constants';
 import { UserPlus, Minus, Plus, Shield, Smile, Cpu, Heart, Sparkles, ChevronRight, User, Star, Briefcase, Lock } from 'lucide-react';
+import { soundManager } from '../audio/SoundManager';
 
 interface Props {
   onComplete: (attributes: Attributes, industry: IndustryType, spentPoints: number) => void;
@@ -160,7 +161,7 @@ const CharacterCreation: React.FC<Props> = ({ onComplete, availableLegacyPoints,
               </div>
 
               <button 
-                onClick={() => onComplete(attrs, selectedIndustry, availableLegacyPoints)}
+                onClick={() => { soundManager.vibrate(15); onComplete(attrs, selectedIndustry, availableLegacyPoints); }}
                 className="w-full text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition-transform"
                 style={{ backgroundColor: indConfig.theme.primaryColor }}
               >

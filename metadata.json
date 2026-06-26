@@ -1,5 +1,25 @@
 {
   "name": "大厂风云 (Big Tech Storm)",
-  "description": "A satirical text-based survival roguelike set in the Chinese tech industry. Survive 365 days, manage your sanity and stamina, and avoid getting 'optimized'.",
-  "requestFramePermissions": []
+  "description": "A satirical text-based survival roguelike set in the Chinese tech industry. Choose your industry, survive 52 weeks, and avoid getting 'optimized'.",
+  "version": "1.2.0",
+  "versionCode": 3,
+  "requestFramePermissions": [],
+  "orientation": "portrait",
+  "category": "simulation",
+  "minTapTapVersion": "3.0.0",
+  "developer": {
+    "name": "大厂风云开发组",
+    "contact": ""
+  },
+  "game": {
+    "type": "text_roguelike",
+    "singleRunTime": "15-30 分钟",
+    "features": [
+      "6大行业赛道",
+      "Roguelike随机事件",
+      "传承成长系统",
+      "排行榜竞技",
+      "成就收集"
+    ]
+  }
 }

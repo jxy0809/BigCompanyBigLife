@@ -312,7 +312,7 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'coffee', name: '咖啡/红牛', description: '续命水。体力+10', price: 30, effect: (s) => ({ stamina: Math.min(s.maxStamina, s.stamina + 10) }), icon: Coffee },
   { id: 'game', name: '3A大作', description: '逃避可耻但有用。心智+20', price: 398, effect: (s) => ({ sanity: Math.min(s.maxSanity, s.sanity + 20) }), icon: Gamepad2 },
   { id: 'course', name: '行业课程', description: '充电。经验+50', price: 500, effect: (s) => ({ exp: s.exp + 50 }), icon: BookOpen },
-  { id: 'supplements', name: '保健品', description: '智商税？体质+1', price: 800, effect: (s) => ({ attributes: { ...s.attributes, health: s.attributes.health + 1 } }), icon: Pill },
-  { id: 'headphones', name: '降噪耳机', description: '物理结界。耐艹+1', price: 2500, effect: (s) => ({ attributes: { ...s.attributes, grind: s.attributes.grind + 1 } }), icon: Headphones },
+  { id: 'supplements', name: '保健品', description: '智商税？体质+1', price: 800, effect: () => ({ attributes: { health: 1 } }), icon: Pill },
+  { id: 'headphones', name: '降噪耳机', description: '物理结界。耐艹+1', price: 2500, effect: () => ({ attributes: { grind: 1 } }), icon: Headphones },
   { id: 'leisure_max', name: '上楼休闲', description: '顶级Spa与冥想。体力与心智完全恢复。', price: 15000, effect: (s) => ({ stamina: s.maxStamina, sanity: s.maxSanity }), icon: Sparkles }
 ];

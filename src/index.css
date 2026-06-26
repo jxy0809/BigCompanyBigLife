@@ -1,0 +1,390 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #F5F6F7;
+    color: #1F2329;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent zoom */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    /* Safe area padding for mobile */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  /* Hidden scrollbar for clean mobile UX */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Touch-friendly: ensure interactive elements have minimum 44px hit area */
+  button, a, [role="button"], input, select, textarea {
+    min-height: 44px;
+    /* iOS HIG minimum touch target */
+  }
+}
+
+@layer components {
+  /* Pressure effects for low stamina states */
+  .pressure-filter {
+    filter: grayscale(0.8) contrast(1.2);
+    transition: filter 2s ease;
+  }
+
+  /* Retirement sunset background */
+  .animate-sunset {
+    background: linear-gradient(270deg, #ff7e5f, #feb47b);
+    background-size: 400% 400%;
+  }
+
+  /* Safe area padding utilities */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  /* Swipe hint animation */
+  .swipe-hint {
+    animation: swipePulse 2s ease-in-out infinite;
+  }
+
+  /* Bottom sheet slide-up animation */
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes swipePulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+  }
+
+  /* Long press feedback */
+  .long-press-active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+
+  /* Mobile-first container */
+  .app-container {
+    @apply h-screen flex flex-col mx-auto relative shadow-2xl overflow-hidden;
+    max-width: 428px;
+    background-color: #F5F6F7;
+  }
+}
+
+@layer components {
+  /* ===== PAGE TRANSITION ANIMATIONS ===== */
+
+  /* Page enter: fade + slide up from bottom */
+  .page-enter {
+    animation: pageEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Page exit: fade + slide down */
+  .page-exit {
+    animation: pageExit 0.2s ease-in forwards;
+  }
+  @keyframes pageExit {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(12px); }
+  }
+
+  /* Event→Result transition glow */
+  .event-result-transition {
+    animation: eventResultGlow 0.5s ease-out;
+  }
+  @keyframes eventResultGlow {
+    0%   { filter: brightness(1.2) blur(2px); }
+    100% { filter: brightness(1) blur(0); }
+  }
+
+  /* ===== NUMERIC CHANGE EFFECTS ===== */
+
+  /* Money gain: green float-up text */
+  .float-gain {
+    animation: floatGain 1.2s ease-out forwards;
+    position: absolute;
+    pointer-events: none;
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  @keyframes floatGain {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    30%  { opacity: 1; transform: translateY(-20px) scale(1.2); }
+    100% { opacity: 0; transform: translateY(-60px) scale(0.8); }
+  }
+
+  /* Money loss: red float-down text */
+  .float-loss {
+    animation: floatLoss 1.2s ease-in forwards;
+    position: absolute;
+    pointer-events: none;
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  @keyframes floatLoss {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    30%  { opacity: 1; transform: translateY(10px) scale(1.1); }
+    100% { opacity: 0; transform: translateY(40px) scale(0.8); }
+  }
+
+  /* Attribute change pulse */
+  .stat-pulse-up {
+    animation: statPulseUp 0.6s ease-out;
+  }
+  @keyframes statPulseUp {
+    0%   { transform: scale(1); filter: brightness(1); }
+    30%  { transform: scale(1.15); filter: brightness(1.3); color: #00b96b; }
+    100% { transform: scale(1); filter: brightness(1); }
+  }
+
+  .stat-pulse-down {
+    animation: statPulseDown 0.6s ease-out;
+  }
+  @keyframes statPulseDown {
+    0%   { transform: scale(1); filter: brightness(1); }
+    30%  { transform: scale(1.15); filter: brightness(1.3); color: #f54a45; }
+    100% { transform: scale(1); filter: brightness(1); }
+  }
+
+  /* ===== RISK BREATHING LIGHT ===== */
+
+  .risk-breathing {
+    animation: riskBreathing 1.5s ease-in-out infinite;
+  }
+  @keyframes riskBreathing {
+    0%, 100% { box-shadow: 0 0 4px rgba(245, 74, 69, 0.3); }
+    50%      { box-shadow: 0 0 12px rgba(245, 74, 69, 0.7); }
+  }
+
+  /* ===== CRISIS EFFECTS ===== */
+
+  /* Screen shake */
+  .screen-shake {
+    animation: screenShake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+  @keyframes screenShake {
+    0%, 100%  { transform: translate(0, 0) rotate(0deg); }
+    10%       { transform: translate(-4px, -2px) rotate(-0.5deg); }
+    20%       { transform: translate(3px, 3px) rotate(0.5deg); }
+    30%       { transform: translate(-3px, -1px) rotate(-0.3deg); }
+    40%       { transform: translate(2px, -2px) rotate(0.3deg); }
+    50%       { transform: translate(-2px, 1px) rotate(-0.2deg); }
+    60%       { transform: translate(1px, -1px) rotate(0.2deg); }
+    70%       { transform: translate(-1px, 2px) rotate(-0.1deg); }
+    80%       { transform: translate(1px, -1px) rotate(0.1deg); }
+    90%       { transform: translate(-1px, 1px) rotate(0deg); }
+  }
+
+  /* Red danger overlay */
+  .crisis-overlay {
+    animation: crisisFlash 0.8s ease-out;
+    background: rgba(220, 38, 38, 0.12);
+    pointer-events: none;
+  }
+  @keyframes crisisFlash {
+    0%    { opacity: 0; }
+    15%   { opacity: 1; }
+    30%   { opacity: 0.3; }
+    45%   { opacity: 1; }
+    60%   { opacity: 0.5; }
+    100%  { opacity: 0; }
+  }
+
+  /* ===== FORTUNE EFFECTS ===== */
+
+  /* Golden glow */
+  .fortune-glow {
+    animation: fortuneGlow 1s ease-out;
+  }
+  @keyframes fortuneGlow {
+    0%   { box-shadow: 0 0 0 rgba(234, 179, 8, 0); }
+    30%  { box-shadow: 0 0 40px rgba(234, 179, 8, 0.4), inset 0 0 20px rgba(234, 179, 8, 0.1); }
+    100% { box-shadow: 0 0 0 rgba(234, 179, 8, 0); }
+  }
+
+  /* Golden sparkle particles (placeholder - spawn via EffectsCanvas) */
+  .fortune-sparkle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #eab308;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparklePop 0.8s ease-out forwards;
+  }
+  @keyframes sparklePop {
+    0%   { transform: scale(0) translate(0, 0); opacity: 1; }
+    50%  { transform: scale(1.5) translate(0, -30px); opacity: 0.8; }
+    100% { transform: scale(0) translate(0, -60px); opacity: 0; }
+  }
+
+  /* ===== DEATH / VICTORY ENDING ANIMATIONS ===== */
+
+  /* Death: gray desaturation */
+  .death-transition {
+    animation: deathDesaturate 1.5s ease-in-out forwards;
+  }
+  @keyframes deathDesaturate {
+    0%   { filter: grayscale(0) brightness(1); }
+    100% { filter: grayscale(1) brightness(0.7); }
+  }
+
+  /* Victory: warm glow + scale */
+  .victory-transition {
+    animation: victoryGlow 1.5s ease-out forwards;
+  }
+  @keyframes victoryGlow {
+    0%   { transform: scale(1); filter: brightness(1); }
+    50%  { transform: scale(1.02); filter: brightness(1.3) saturate(1.3); }
+    100% { transform: scale(1); filter: brightness(1.1) saturate(1.1); }
+  }
+
+  /* Metro special ending */
+  .metro-ending {
+    animation: metroReveal 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes metroReveal {
+    0%   { opacity: 0; transform: scale(0.8); filter: blur(8px); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0); }
+  }
+
+  /* ===== BUFF / DEBUFF VISUALS ===== */
+
+  /* Buff green glow badge */
+  .buff-glow {
+    animation: buffGlow 2s ease-in-out infinite;
+  }
+  @keyframes buffGlow {
+    0%, 100% { box-shadow: 0 0 2px rgba(0, 185, 107, 0.3); }
+    50%      { box-shadow: 0 0 8px rgba(0, 185, 107, 0.6); }
+  }
+
+  /* Debuff red flash badge */
+  .debuff-flash {
+    animation: debuffFlash 1.5s ease-in-out infinite;
+  }
+  @keyframes debuffFlash {
+    0%, 100% { box-shadow: 0 0 2px rgba(245, 74, 69, 0.3); }
+    50%      { box-shadow: 0 0 8px rgba(245, 74, 69, 0.6); }
+  }
+
+  /* Buff corner indicator dot */
+  .buff-indicator {
+    position: relative;
+  }
+  .buff-indicator::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #00b96b;
+    border: 1.5px solid white;
+    box-shadow: 0 0 4px rgba(0, 185, 107, 0.5);
+  }
+
+  .debuff-indicator {
+    position: relative;
+  }
+  .debuff-indicator::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f54a45;
+    border: 1.5px solid white;
+    box-shadow: 0 0 4px rgba(245, 74, 69, 0.5);
+  }
+
+  /* ===== ANIMATED PARTICLES FOR EFFECTS CANVAS ===== */
+
+  /* Floating coin particle */
+  .coin-particle {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fbbf24, #eab308);
+    pointer-events: none;
+    animation: coinFloat 1s ease-out forwards;
+    box-shadow: 0 0 6px rgba(234, 179, 8, 0.4);
+  }
+  @keyframes coinFloat {
+    0%   { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(-80px) scale(0.3) rotate(360deg); }
+  }
+
+  /* Damage/crisis particle */
+  .crisis-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #ef4444;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: crisisScatter 0.8s ease-out forwards;
+  }
+  @keyframes crisisScatter {
+    0%   { opacity: 1; transform: translate(0, 0); }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)); }
+  }
+}
+
+@layer utilities {
+  /* Touch callout prevention */
+  .touch-none {
+    touch-action: none;
+  }
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  .select-none {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}

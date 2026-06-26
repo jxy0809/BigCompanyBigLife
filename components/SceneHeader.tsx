@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Location, IndustryType } from '../types';
 import { INDUSTRIES } from '../constants';
 import { Monitor, Users, Building, Home } from 'lucide-react';
@@ -43,4 +43,4 @@ const SceneHeader: React.FC<Props> = ({ location, industry }) => {
   );
 };
 
-export default SceneHeader;
+export default memo(SceneHeader);

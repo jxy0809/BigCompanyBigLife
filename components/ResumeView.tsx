@@ -132,7 +132,7 @@ const ResumeView: React.FC<Props> = ({ stats, onRetire }) => {
              </h3>
              <div className="space-y-2">
                  {stats.activeBuffs.map(buff => (
-                     <div key={buff.id} className={`flex justify-between items-center p-2 rounded-lg ${buff.isNegative ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                     <div key={buff.id} className={`flex justify-between items-center p-2 rounded-lg ${buff.isNegative ? 'bg-red-50 text-red-700 debuff-flash' : 'bg-green-50 text-green-700 buff-glow'}`}>
                          <div>
                              <div className="text-xs font-bold">{buff.name}</div>
                              <div className="text-[10px] opacity-80">{buff.description}</div>
