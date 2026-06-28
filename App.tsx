@@ -401,14 +401,25 @@ const App: React.FC = () => {
   const handleWeekendChoice = (choice: string) => {
       soundManager.onButtonClick();
       let currentStats = { ...stats };
+      // Clone nested objects to ensure React detects changes
+      currentStats.attributes = { ...currentStats.attributes };
+      currentStats.relationships = { ...currentStats.relationships };
+      currentStats.activeBuffs = [...currentStats.activeBuffs];
+
+      const beforeMoney = currentStats.money;
+      const beforeStamina = currentStats.stamina;
+      const beforeSanity = currentStats.sanity;
+      const beforeTech = currentStats.attributes.tech;
 
       if (currentStats.isSmallWeek) {
         // ── 小周（单休）：强制"苟延残喘"，恢复极弱 ──
         const staminaRecovery = Math.floor(CONFIG.WEEKEND_SLEEP_STAMINA * CONFIG.SMALL_WEEK_RECOVERY_RATE);
         currentStats.stamina = Math.min(currentStats.maxStamina, currentStats.stamina + staminaRecovery);
         currentStats.sanity = Math.max(0, currentStats.sanity - CONFIG.SMALL_WEEK_SANITY_PENALTY);
+        console.log(`[Weekend] 小周苟延残喘: 体力+${staminaRecovery}(now ${currentStats.stamina}/${currentStats.maxStamina}) 心智-${CONFIG.SMALL_WEEK_SANITY_PENALTY}(now ${currentStats.sanity})`);
       } else {
         // ── 大周（双休）：完整周末选项 ──
+        console.log(`[Weekend] 大周选项: ${choice}, 修改前 -> 金钱:${beforeMoney} 体力:${beforeStamina} 心智:${beforeSanity} 技术:${beforeTech}`);
         switch (choice) {
           case 'SLEEP':
             // 疯狂补觉：体力+40, 心智+20
@@ -446,18 +457,23 @@ const App: React.FC = () => {
               if (Math.random() < winRate) {
                 const gain = 2500 + Math.floor(Math.random() * 5500);
                 currentStats.money += gain;
+                console.log(`[Weekend] 投资盈利: +${gain}`);
               } else {
                 const loss = 1000 + Math.floor(Math.random() * 3000);
                 currentStats.money -= loss;
+                console.log(`[Weekend] 投资亏损: -${loss}`);
               }
             }
             break;
           default:
+            console.warn(`[Weekend] 未知选项: ${choice}, 不应用任何效果`);
             break;
         }
+        console.log(`[Weekend] 修改后 -> 金钱:${currentStats.money}(Δ${currentStats.money - beforeMoney}) 体力:${currentStats.stamina}(Δ${currentStats.stamina - beforeStamina}) 心智:${currentStats.sanity}(Δ${currentStats.sanity - beforeSanity}) 技术:${currentStats.attributes.tech}(Δ${currentStats.attributes.tech - beforeTech})`);
       }
 
       currentStats.week += 1;
+      console.log(`[Weekend] 进入第 ${currentStats.week} 周, 最终状态: 金钱=${currentStats.money} 体力=${currentStats.stamina}/${currentStats.maxStamina} 心智=${currentStats.sanity}/${currentStats.maxSanity} tech=${currentStats.attributes.tech}`);
       setStats(currentStats);
       saveGame(currentStats);
       startWeek(currentStats);
